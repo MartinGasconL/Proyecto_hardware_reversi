@@ -1,0 +1,70 @@
+/*********************************************************************************************
+* Fichero:	debug_stack.c
+* Autor: Eduardo Ruiz y Martin Gascon
+* Descrip:	Estructura de datos dedicada a la depuración y gestion de eventos del sistema
+* Version:  <P4-ARM.timer-leds>
+*********************************************************************************************/
+#include "debug_stack.h"
+#include "44b.h"
+#include "stdint.h"
+#include "timer2.h"
+#include <math.h>
+
+
+// La primera pila es la pilas de usuario y se define(como el resto) en 44binit.asm
+// .equ 	UserStack,	_ISR_STARTADDRESS-0xf00    		/* c7ff000 */
+// definimos la nuestra en la direccion de la primera pero 768 bits antes (nuestro tamaño de pila es 768)
+#define DebugStack (_ISR_STARTADDRESS - 0xf00 - 256);
+
+
+uint32_t* cima_pila = DebugStack;
+uint32_t* cima_tratados = DebugStack;
+
+uint32_t* final_pila = _ISR_STARTADDRESS-0xf00;
+
+//Apilamos un evento con el siguiente formato:
+// 0x0...4	ID_evento aux_data
+// 0x0...8	tiempo
+void push_debug(int ID_evento, int aux_data){
+	int tiempo = timer2_leer(); 		//leemos el valor del timer
+	/* PARA DEPURACION  breakpoint  aqui (abajo)*/
+
+	if (cima_pila + 2 == final_pila){	//La pila es circular.
+		cima_pila = DebugStack;
+	}
+
+	int dato = concatenar_parametros(ID_evento, aux_data);
+	*cima_pila = dato; 				//apilamos ID_evento
+	cima_pila = cima_pila + 1; 		//movemos el stack pointer
+	*cima_pila = tiempo; 			//apilamos el tiempo
+	cima_pila = cima_pila + 1; 		//movemos stack pointer
+}
+
+void init_stack(){
+	cima_pila = DebugStack;
+	cima_tratados = DebugStack;
+	final_pila = _ISR_STARTADDRESS-0xf00;
+}
+//retorna verdadero si hay eventos sin tratar
+int hayEventos(){
+	return cima_pila != cima_tratados;
+}
+
+//desapila un evento
+int tratar_evento(){
+	if (cima_tratados + 2 == final_pila){
+			cima_tratados = DebugStack;
+	}
+	int retval = *cima_tratados>>24 ;	//devuelvo el id del evento (8 msb) por lo que elimino los 24 bits a la derecha
+	cima_tratados += 2;
+	return retval;
+}
+// Puesto que en el primer registro a insertar se insertan dos datos es necesario concatenar
+//el id de evento (8 bits)  y el dato (24 bits)
+int concatenar_parametros(int a, int b){
+	a &= 0x000000FF;	//Limpiamos los 24 msb del id del evento
+	a = a << 24;		//dejamos hueco a la derecha para insertar ahi el dato
+	b &= 0x00FFFFFF;	//Limpiamos los bits correspondientes al id evento en el dato
+	b |= a;
+	return b;
+}

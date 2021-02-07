@@ -1,0 +1,278 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 6
+  10              		.eabi_attribute 18, 4
+  11              		.file	"controlador_excepciones.c"
+  21              	.Ltext0:
+  22              		.file 1 "../controlador_excepciones.c"
+ 1878              		.align	2
+ 1879              		.global	ERROR_ISR
+ 1881              	ERROR_ISR:
+ 1882              	.LFB0:
+   1:../controlador_excepciones.c **** /*********************************************************************************************
+   2:../controlador_excepciones.c **** * Fichero:	controlador_excepciones.c
+   3:../controlador_excepciones.c **** * Autor: Eduardo Ruiz y Martin Gascon
+   4:../controlador_excepciones.c **** * Descrip:	Fichero fuente dedicado a la gestion de las excepciones
+   5:../controlador_excepciones.c **** * Version:  <P4-ARM.timer-leds>
+   6:../controlador_excepciones.c **** *********************************************************************************************/
+   7:../controlador_excepciones.c **** #include "44blib.h"
+   8:../controlador_excepciones.c **** #include "44b.h"
+   9:../controlador_excepciones.c **** #include "control_modo_procesador.h"
+  10:../controlador_excepciones.c **** 
+  11:../controlador_excepciones.c **** int dir_instruccion;
+  12:../controlador_excepciones.c **** int dir_ins;
+  13:../controlador_excepciones.c **** void ERROR_ISR(){
+ 1883              		.loc 1 13 0
+ 1884              		.cfi_startproc
+ 1885              		@ Function supports interworking.
+ 1886              		@ args = 0, pretend = 0, frame = 8
+ 1887              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1888 0000 0DC0A0E1 		mov	ip, sp
+ 1889              	.LCFI0:
+ 1890              		.cfi_def_cfa_register 12
+ 1891 0004 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1892 0008 04B04CE2 		sub	fp, ip, #4
+ 1893              		.cfi_offset 14, -8
+ 1894              		.cfi_offset 13, -12
+ 1895              		.cfi_offset 11, -16
+ 1896              	.LCFI1:
+ 1897              		.cfi_def_cfa 11, 4
+ 1898 000c 08D04DE2 		sub	sp, sp, #8
+  14:../controlador_excepciones.c **** 	//Obtenermos la palabra de estado, nos interesan los ultimos 5 bits que definen el
+  15:../controlador_excepciones.c **** 	//estado del procesador
+  16:../controlador_excepciones.c **** 
+  17:../controlador_excepciones.c **** 
+  18:../controlador_excepciones.c **** 	/*0x10000 16	User
+  19:../controlador_excepciones.c **** 	  0x10001 17 	FIQ
+  20:../controlador_excepciones.c **** 	  0x10010 18 	IRQ
+  21:../controlador_excepciones.c **** 	  0x10011 19	SVC
+  22:../controlador_excepciones.c **** 	  0x10111 23	Abort
+  23:../controlador_excepciones.c **** 	  0x11011 27	Undefined
+  24:../controlador_excepciones.c **** 	  0x11111 31	System (ARMv4+)*/
+  25:../controlador_excepciones.c **** 
+  26:../controlador_excepciones.c **** 
+  27:../controlador_excepciones.c **** 	asm("ldr r2, =dir_ins\n\t"
+ 1899              		.loc 1 27 0
+ 1900              	@ 27 "../controlador_excepciones.c" 1
+ 1901 0010 1C219FE5 		ldr r2, =dir_ins
+ 1902 0014 00E082E5 		str lr, [r2]
+ 1903              		
+ 1904              	@ 0 "" 2
+  28:../controlador_excepciones.c **** 				"str lr, [r2]\n\t");
+  29:../controlador_excepciones.c **** 	int estado = obtener_modo_procesador();
+ 1905              		.loc 1 29 0
+ 1906 0018 FEFFFFEB 		bl	obtener_modo_procesador
+ 1907 001c 10000BE5 		str	r0, [fp, #-16]
+  30:../controlador_excepciones.c **** 
+  31:../controlador_excepciones.c **** 	switch(estado){
+ 1908              		.loc 1 31 0
+ 1909 0020 10301BE5 		ldr	r3, [fp, #-16]
+ 1910 0024 110053E3 		cmp	r3, #17
+ 1911 0028 0F0000BA 		blt	.L2
+ 1912 002c 120053E3 		cmp	r3, #18
+ 1913 0030 070000DA 		ble	.L3
+ 1914 0034 170053E3 		cmp	r3, #23
+ 1915 0038 0B00001A 		bne	.L2
+ 1916              	.L4:
+  32:../controlador_excepciones.c **** 			case ABORT:
+  33:../controlador_excepciones.c **** 				dir_ins = dir_ins - 8;
+ 1917              		.loc 1 33 0
+ 1918 003c 70309FE5 		ldr	r3, .L9
+ 1919 0040 003093E5 		ldr	r3, [r3, #0]
+ 1920 0044 082043E2 		sub	r2, r3, #8
+ 1921 0048 64309FE5 		ldr	r3, .L9
+ 1922 004c 002083E5 		str	r2, [r3, #0]
+  34:../controlador_excepciones.c **** 				break;
+ 1923              		.loc 1 34 0
+ 1924 0050 050000EA 		b	.L2
+ 1925              	.L3:
+  35:../controlador_excepciones.c **** 			case FIQ:
+  36:../controlador_excepciones.c **** 			case IRQ:
+  37:../controlador_excepciones.c **** 				dir_ins = dir_ins - 4;
+ 1926              		.loc 1 37 0
+ 1927 0054 58309FE5 		ldr	r3, .L9
+ 1928 0058 003093E5 		ldr	r3, [r3, #0]
+ 1929 005c 042043E2 		sub	r2, r3, #4
+ 1930 0060 4C309FE5 		ldr	r3, .L9
+ 1931 0064 002083E5 		str	r2, [r3, #0]
+  38:../controlador_excepciones.c **** 				break;
+ 1932              		.loc 1 38 0
+ 1933 0068 0000A0E1 		mov	r0, r0	@ nop
+ 1934              	.L2:
+  39:../controlador_excepciones.c **** 		}
+  40:../controlador_excepciones.c **** 
+  41:../controlador_excepciones.c **** 	switch(estado){
+ 1935              		.loc 1 41 0
+ 1936 006c 10301BE5 		ldr	r3, [fp, #-16]
+ 1937 0070 170053E3 		cmp	r3, #23
+ 1938 0074 0700000A 		beq	.L7
+ 1939 0078 1B0053E3 		cmp	r3, #27
+ 1940 007c 0800000A 		beq	.L8
+ 1941 0080 130053E3 		cmp	r3, #19
+ 1942 0084 0000000A 		beq	.L6
+ 1943 0088 080000EA 		b	.L5
+ 1944              	.L6:
+ 1945              	.LBB2:
+  42:../controlador_excepciones.c **** 		case SVC:
+  43:../controlador_excepciones.c **** 			D8Led_symbol(10);
+ 1946              		.loc 1 43 0
+ 1947 008c 0A00A0E3 		mov	r0, #10
+ 1948 0090 FEFFFFEB 		bl	D8Led_symbol
+  44:../controlador_excepciones.c **** 			break;
+ 1949              		.loc 1 44 0
+ 1950 0094 050000EA 		b	.L5
+ 1951              	.L7:
+  45:../controlador_excepciones.c **** 		case ABORT:
+  46:../controlador_excepciones.c **** 			D8Led_symbol(11);
+ 1952              		.loc 1 46 0
+ 1953 0098 0B00A0E3 		mov	r0, #11
+ 1954 009c FEFFFFEB 		bl	D8Led_symbol
+  47:../controlador_excepciones.c **** 			break;
+ 1955              		.loc 1 47 0
+ 1956 00a0 020000EA 		b	.L5
+ 1957              	.L8:
+  48:../controlador_excepciones.c **** 		case UNDEF:
+  49:../controlador_excepciones.c **** 			D8Led_symbol(12);
+ 1958              		.loc 1 49 0
+ 1959 00a4 0C00A0E3 		mov	r0, #12
+ 1960 00a8 FEFFFFEB 		bl	D8Led_symbol
+  50:../controlador_excepciones.c **** 			break;
+ 1961              		.loc 1 50 0
+ 1962 00ac 0000A0E1 		mov	r0, r0	@ nop
+ 1963              	.L5:
+ 1964              	.LBE2:
+  51:../controlador_excepciones.c **** 	}
+  52:../controlador_excepciones.c **** 	while(1);
+ 1965              		.loc 1 52 0 discriminator 1
+ 1966 00b0 FEFFFFEA 		b	.L5
+ 1967              	.L10:
+ 1968              		.align	2
+ 1969              	.L9:
+ 1970 00b4 00000000 		.word	dir_ins
+ 1971              		.cfi_endproc
+ 1972              	.LFE0:
+ 1974              		.align	2
+ 1975              		.global	init_excepciones
+ 1977              	init_excepciones:
+ 1978              	.LFB1:
+  53:../controlador_excepciones.c **** 
+  54:../controlador_excepciones.c **** }
+  55:../controlador_excepciones.c **** 
+  56:../controlador_excepciones.c **** 
+  57:../controlador_excepciones.c **** void init_excepciones(){
+ 1979              		.loc 1 57 0
+ 1980              		.cfi_startproc
+ 1981              		@ Function supports interworking.
+ 1982              		@ args = 0, pretend = 0, frame = 0
+ 1983              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1984 00b8 0DC0A0E1 		mov	ip, sp
+ 1985              	.LCFI2:
+ 1986              		.cfi_def_cfa_register 12
+ 1987 00bc 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1988 00c0 04B04CE2 		sub	fp, ip, #4
+ 1989              		.cfi_offset 14, -8
+ 1990              		.cfi_offset 13, -12
+ 1991              		.cfi_offset 11, -16
+ 1992              	.LCFI3:
+ 1993              		.cfi_def_cfa 11, 4
+  58:../controlador_excepciones.c **** 	pISR_PABORT = (unsigned) ERROR_ISR;
+ 1994              		.loc 1 58 0
+ 1995 00c4 34309FE5 		ldr	r3, .L12
+ 1996 00c8 34209FE5 		ldr	r2, .L12+4
+ 1997 00cc 002083E5 		str	r2, [r3, #0]
+  59:../controlador_excepciones.c **** 	pISR_DABORT = (unsigned) ERROR_ISR;
+ 1998              		.loc 1 59 0
+ 1999 00d0 30309FE5 		ldr	r3, .L12+8
+ 2000 00d4 28209FE5 		ldr	r2, .L12+4
+ 2001 00d8 002083E5 		str	r2, [r3, #0]
+  60:../controlador_excepciones.c **** 	pISR_UNDEF = (unsigned) ERROR_ISR;
+ 2002              		.loc 1 60 0
+ 2003 00dc 28309FE5 		ldr	r3, .L12+12
+ 2004 00e0 1C209FE5 		ldr	r2, .L12+4
+ 2005 00e4 002083E5 		str	r2, [r3, #0]
+  61:../controlador_excepciones.c **** 	pISR_SWI = (unsigned) ERROR_ISR;
+ 2006              		.loc 1 61 0
+ 2007 00e8 20309FE5 		ldr	r3, .L12+16
+ 2008 00ec 10209FE5 		ldr	r2, .L12+4
+ 2009 00f0 002083E5 		str	r2, [r3, #0]
+  62:../controlador_excepciones.c **** }
+ 2010              		.loc 1 62 0
+ 2011 00f4 0CD04BE2 		sub	sp, fp, #12
+ 2012 00f8 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 2013 00fc 1EFF2FE1 		bx	lr
+ 2014              	.L13:
+ 2015              		.align	2
+ 2016              	.L12:
+ 2017 0100 0CFF7F0C 		.word	209714956
+ 2018 0104 00000000 		.word	ERROR_ISR
+ 2019 0108 10FF7F0C 		.word	209714960
+ 2020 010c 04FF7F0C 		.word	209714948
+ 2021 0110 08FF7F0C 		.word	209714952
+ 2022              		.cfi_endproc
+ 2023              	.LFE1:
+ 2025              		.align	2
+ 2026              		.global	test_excepciones
+ 2028              	test_excepciones:
+ 2029              	.LFB2:
+  63:../controlador_excepciones.c **** 
+  64:../controlador_excepciones.c **** void test_excepciones(){
+ 2030              		.loc 1 64 0
+ 2031              		.cfi_startproc
+ 2032              		@ Function supports interworking.
+ 2033              		@ args = 0, pretend = 0, frame = 0
+ 2034              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2035 0114 0DC0A0E1 		mov	ip, sp
+ 2036              	.LCFI4:
+ 2037              		.cfi_def_cfa_register 12
+ 2038 0118 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 2039 011c 04B04CE2 		sub	fp, ip, #4
+ 2040              		.cfi_offset 14, -8
+ 2041              		.cfi_offset 13, -12
+ 2042              		.cfi_offset 11, -16
+ 2043              	.LCFI5:
+ 2044              		.cfi_def_cfa 11, 4
+  65:../controlador_excepciones.c **** 	//generar_abort();
+  66:../controlador_excepciones.c **** 	generar_swi();
+ 2045              		.loc 1 66 0
+ 2046 0120 FEFFFFEB 		bl	generar_swi
+  67:../controlador_excepciones.c **** 	asm volatile (".word 0xe7f000f0\n");	//GENERA UNA INTERRUPCION UNDEF (ejecutar una instruccion que
+ 2047              		.loc 1 67 0
+ 2048              	@ 67 "../controlador_excepciones.c" 1
+ 2049 0124 F000F0E7 		.word 0xe7f000f0
+ 2050              	
+ 2051              	@ 0 "" 2
+  68:../controlador_excepciones.c **** }
+ 2052              		.loc 1 68 0
+ 2053 0128 0CD04BE2 		sub	sp, fp, #12
+ 2054 012c 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 2055 0130 1EFF2FE1 		bx	lr
+ 2056              		.cfi_endproc
+ 2057              	.LFE2:
+ 2059              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 controlador_excepciones.c
+                            *COM*:00000004 dir_instruccion
+                            *COM*:00000004 dir_ins
+C:\Users\Martin\AppData\Local\Temp\cclJbA1y.s:1878   .text:00000000 $a
+C:\Users\Martin\AppData\Local\Temp\cclJbA1y.s:1881   .text:00000000 ERROR_ISR
+C:\Users\Martin\AppData\Local\Temp\cclJbA1y.s:1970   .text:000000b4 $d
+C:\Users\Martin\AppData\Local\Temp\cclJbA1y.s:1974   .text:000000b8 $a
+C:\Users\Martin\AppData\Local\Temp\cclJbA1y.s:1977   .text:000000b8 init_excepciones
+C:\Users\Martin\AppData\Local\Temp\cclJbA1y.s:2017   .text:00000100 $d
+C:\Users\Martin\AppData\Local\Temp\cclJbA1y.s:2025   .text:00000114 $a
+C:\Users\Martin\AppData\Local\Temp\cclJbA1y.s:2028   .text:00000114 test_excepciones
+C:\Users\Martin\AppData\Local\Temp\cclJbA1y.s:2049   .text:00000124 $d
+C:\Users\Martin\AppData\Local\Temp\cclJbA1y.s:2053   .text:00000128 $a
+C:\Users\Martin\AppData\Local\Temp\cclJbA1y.s:2060   .text:00000134 $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+obtener_modo_procesador
+D8Led_symbol
+generar_swi

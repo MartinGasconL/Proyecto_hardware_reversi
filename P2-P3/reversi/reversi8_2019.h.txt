@@ -1,0 +1,72 @@
+
+// Tamaño del tablero
+
+// Valores que puede devolver la función patron_volteo())
+#include "stdint.h"
+
+
+enum { DIM=8 };
+
+enum {
+	NO_HAY_PATRON = 0,
+  PATRON_ENCONTRADO = 1
+};
+
+enum {
+	CASILLA_VACIA = 0,
+	FICHA_BLANCA = 1,
+	FICHA_NEGRA = 2
+};
+
+
+enum { NUM_JUGADAS = 4 };
+// candidatas: indica las posiciones a explorar
+// Se usa para no explorar todo el tablero innecesariamente
+// Sus posibles valores son NO, SI, CASILLA_OCUPADA
+enum {NO              = 0,
+ SI              = 1,
+ CASILLA_OCUPADA = 2};
+
+/////////////////////////////////////////////////////////////////////////////
+// TABLAS AUXILIARES
+// declaramos las siguientes tablas como globales para que sean más fáciles visualizarlas en el simulador
+// __attribute__ ((aligned (8))): specifies a minimum alignment for the variable or structure field, measured in bytes, in this case 8 bytes
+
+static const uint8_t __attribute__ ((aligned (8))) tabla_valor[DIM][DIM] =
+{
+    {8,2,7,3,3,7,2,8},
+    {2,1,4,4,4,4,1,2},
+    {7,4,6,5,5,6,4,7},
+    {3,4,5,0,0,5,4,3},
+    {3,4,5,0,0,5,4,3},
+    {7,4,6,5,5,6,4,7},
+    {2,1,4,4,4,4,1,2},
+    {8,2,7,3,3,7,2,8}
+};
+
+
+// Tabla de direcciones. Contiene los desplazamientos de las 8 direcciones posibles
+static const int8_t vSF[DIM] = {-1,-1, 0, 1, 1, 1, 0,-1};
+static const int8_t vSC[DIM] = { 0, 1, 1, 1, 0,-1,-1,-1};
+
+int accesos_patron_volteo;
+int tiempo_patron_volteo;
+
+int tiempo_partida;
+void reversi8();
+
+
+
+
+int tableros_iguales(uint8_t tablero[DIM][DIM], uint8_t tableros_resueltos[4][DIM][DIM], int indice);
+void obtener_tableros_resueltos(uint8_t tableros_resueltos[NUM_JUGADAS][DIM][DIM]);
+void jugar(uint8_t fi, uint8_t co);
+int test();
+void analisis_tiempos();
+int obtener_ficha_celda(int f, int c);
+int hay_eventos_encolados();
+
+int posicion_ocupada(int fila, int columna);
+void dormir_procesador();
+void reversi_main();
+

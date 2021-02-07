@@ -1,0 +1,1316 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 6
+  10              		.eabi_attribute 18, 4
+  11              		.file	"tp.c"
+  21              	.Ltext0:
+  22              		.file 1 "../tp.c"
+ 2715              		.align	2
+ 2718              	primera_pulsacion:
+ 2719 0000 01000000 		.word	1
+ 2720              		.global	__aeabi_uidiv
+ 2721              		.text
+ 2722              		.align	2
+ 2723              		.global	TSInt
+ 2725              	TSInt:
+ 2726              	.LFB0:
+   1:../tp.c       **** /*********************************************************************************************
+   2:../tp.c       **** * File£º	tp.c
+   3:../tp.c       **** * Author:	embest	
+   4:../tp.c       **** * Desc£º	LCD touch screen control function
+   5:../tp.c       **** * History:	
+   6:../tp.c       **** *********************************************************************************************/
+   7:../tp.c       **** 
+   8:../tp.c       **** /*--- include files ---*/
+   9:../tp.c       **** #include <string.h>
+  10:../tp.c       **** #include "tp.h"
+  11:../tp.c       **** #include "lcd.h"
+  12:../tp.c       **** #include "debug_stack.h"
+  13:../tp.c       **** void TSInt(void) __attribute__((interrupt("IRQ")));
+  14:../tp.c       **** static int primera_pulsacion = 1;
+  15:../tp.c       **** 
+  16:../tp.c       **** /*--- function code ---*/
+  17:../tp.c       **** 
+  18:../tp.c       **** void TSInt(void)
+  19:../tp.c       **** {
+ 2727              		.loc 1 19 0
+ 2728              		.cfi_startproc
+ 2729              		@ Interrupt Service Routine.
+ 2730              		@ args = 0, pretend = 0, frame = 40
+ 2731              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2732 0000 04C02DE5 		str	ip, [sp, #-4]!
+ 2733 0004 0DC0A0E1 		mov	ip, sp
+ 2734              	.LCFI0:
+ 2735              		.cfi_def_cfa_register 12
+ 2736 0008 0FD82DE9 		stmfd	sp!, {r0, r1, r2, r3, fp, ip, lr, pc}
+ 2737 000c 04B04CE2 		sub	fp, ip, #4
+ 2738              		.cfi_offset 14, -8
+ 2739              		.cfi_offset 13, -12
+ 2740              		.cfi_offset 11, -16
+ 2741              		.cfi_offset 3, -20
+ 2742              		.cfi_offset 2, -24
+ 2743              		.cfi_offset 1, -28
+ 2744              		.cfi_offset 0, -32
+ 2745              	.LCFI1:
+ 2746              		.cfi_def_cfa 11, 4
+ 2747 0010 28D04DE2 		sub	sp, sp, #40
+  20:../tp.c       **** 
+  21:../tp.c       ****     int   i;
+  22:../tp.c       ****     char fail = 0;
+ 2748              		.loc 1 22 0
+ 2749 0014 0030A0E3 		mov	r3, #0
+ 2750 0018 25304BE5 		strb	r3, [fp, #-37]
+  23:../tp.c       ****     ULONG tmp;
+  24:../tp.c       ****     ULONG Pt[6];
+  25:../tp.c       **** 
+  26:../tp.c       **** 	// <X-Position Read>
+  27:../tp.c       **** 	// TSPX(GPE4_Q4(+)) TSPY(GPE5_Q3(-)) TSMY(GPE6_Q2(+)) TSMX(GPE7_Q1(-))
+  28:../tp.c       ****     //       0               1                 1                0
+  29:../tp.c       **** 	rPDATE=0x68;
+ 2751              		.loc 1 29 0
+ 2752 001c 74339FE5 		ldr	r3, .L14
+ 2753 0020 6820A0E3 		mov	r2, #104
+ 2754 0024 002083E5 		str	r2, [r3, #0]
+  30:../tp.c       **** 	rADCCON=0x1<<2;			// AIN1
+ 2755              		.loc 1 30 0
+ 2756 0028 7537A0E3 		mov	r3, #30670848
+ 2757 002c 0420A0E3 		mov	r2, #4
+ 2758 0030 002083E5 		str	r2, [r3, #0]
+  31:../tp.c       **** 	
+  32:../tp.c       **** 	Delay(1000);                // delay to set up the next channel
+ 2759              		.loc 1 32 0
+ 2760 0034 FA0FA0E3 		mov	r0, #1000
+ 2761 0038 FEFFFFEB 		bl	Delay
+  33:../tp.c       **** 	for( i=0; i<5; i++ )
+ 2762              		.loc 1 33 0
+ 2763 003c 0030A0E3 		mov	r3, #0
+ 2764 0040 20300BE5 		str	r3, [fp, #-32]
+ 2765 0044 1F0000EA 		b	.L2
+ 2766              	.L5:
+  34:../tp.c       **** 	{
+  35:../tp.c       **** 		rADCCON |= 0x1;				// Start X-position A/D conversion
+ 2767              		.loc 1 35 0
+ 2768 0048 7537A0E3 		mov	r3, #30670848
+ 2769 004c 7527A0E3 		mov	r2, #30670848
+ 2770 0050 002092E5 		ldr	r2, [r2, #0]
+ 2771 0054 012082E3 		orr	r2, r2, #1
+ 2772 0058 002083E5 		str	r2, [r3, #0]
+  36:../tp.c       **** 	    while( rADCCON & 0x1 );		// Check if Enable_start is low
+ 2773              		.loc 1 36 0
+ 2774 005c 0000A0E1 		mov	r0, r0	@ nop
+ 2775              	.L3:
+ 2776              		.loc 1 36 0 is_stmt 0 discriminator 1
+ 2777 0060 7537A0E3 		mov	r3, #30670848
+ 2778 0064 003093E5 		ldr	r3, [r3, #0]
+ 2779 0068 013003E2 		and	r3, r3, #1
+ 2780 006c FF3003E2 		and	r3, r3, #255
+ 2781 0070 000053E3 		cmp	r3, #0
+ 2782 0074 F9FFFF1A 		bne	.L3
+  37:../tp.c       ****     	while( !(rADCCON & 0x40) );	// Check ECFLG
+ 2783              		.loc 1 37 0 is_stmt 1
+ 2784 0078 0000A0E1 		mov	r0, r0	@ nop
+ 2785              	.L4:
+ 2786              		.loc 1 37 0 is_stmt 0 discriminator 1
+ 2787 007c 7537A0E3 		mov	r3, #30670848
+ 2788 0080 003093E5 		ldr	r3, [r3, #0]
+ 2789 0084 403003E2 		and	r3, r3, #64
+ 2790 0088 000053E3 		cmp	r3, #0
+ 2791 008c FAFFFF0A 		beq	.L4
+  38:../tp.c       **** 	    Pt[i] = (0x3ff&rADCDAT);
+ 2792              		.loc 1 38 0 is_stmt 1
+ 2793 0090 04339FE5 		ldr	r3, .L14+4
+ 2794 0094 003093E5 		ldr	r3, [r3, #0]
+ 2795 0098 033BA0E1 		mov	r3, r3, asl #22
+ 2796 009c 233BA0E1 		mov	r3, r3, lsr #22
+ 2797 00a0 20101BE5 		ldr	r1, [fp, #-32]
+ 2798 00a4 2320E0E3 		mvn	r2, #35
+ 2799 00a8 0111A0E1 		mov	r1, r1, asl #2
+ 2800 00ac 1C004BE2 		sub	r0, fp, #28
+ 2801 00b0 011080E0 		add	r1, r0, r1
+ 2802 00b4 022081E0 		add	r2, r1, r2
+ 2803 00b8 003082E5 		str	r3, [r2, #0]
+  33:../tp.c       **** 	for( i=0; i<5; i++ )
+ 2804              		.loc 1 33 0
+ 2805 00bc 20301BE5 		ldr	r3, [fp, #-32]
+ 2806 00c0 013083E2 		add	r3, r3, #1
+ 2807 00c4 20300BE5 		str	r3, [fp, #-32]
+ 2808              	.L2:
+  33:../tp.c       **** 	for( i=0; i<5; i++ )
+ 2809              		.loc 1 33 0 is_stmt 0 discriminator 1
+ 2810 00c8 20301BE5 		ldr	r3, [fp, #-32]
+ 2811 00cc 040053E3 		cmp	r3, #4
+ 2812 00d0 DCFFFFDA 		ble	.L5
+  39:../tp.c       **** 	}
+  40:../tp.c       **** 	// read X-position average value
+  41:../tp.c       **** 	Pt[5] = (Pt[0]+Pt[1]+Pt[2]+Pt[3]+Pt[4])/5;
+ 2813              		.loc 1 41 0 is_stmt 1
+ 2814 00d4 40201BE5 		ldr	r2, [fp, #-64]
+ 2815 00d8 3C301BE5 		ldr	r3, [fp, #-60]
+ 2816 00dc 032082E0 		add	r2, r2, r3
+ 2817 00e0 38301BE5 		ldr	r3, [fp, #-56]
+ 2818 00e4 032082E0 		add	r2, r2, r3
+ 2819 00e8 34301BE5 		ldr	r3, [fp, #-52]
+ 2820 00ec 032082E0 		add	r2, r2, r3
+ 2821 00f0 30301BE5 		ldr	r3, [fp, #-48]
+ 2822 00f4 032082E0 		add	r2, r2, r3
+ 2823 00f8 A0329FE5 		ldr	r3, .L14+8
+ 2824 00fc 921383E0 		umull	r1, r3, r2, r3
+ 2825 0100 2331A0E1 		mov	r3, r3, lsr #2
+ 2826 0104 2C300BE5 		str	r3, [fp, #-44]
+  42:../tp.c       **** 	
+  43:../tp.c       **** 	tmp = Pt[5];	
+ 2827              		.loc 1 43 0
+ 2828 0108 2C301BE5 		ldr	r3, [fp, #-44]
+ 2829 010c 24300BE5 		str	r3, [fp, #-36]
+  44:../tp.c       **** 	
+  45:../tp.c       ****     // <Y-Position Read>
+  46:../tp.c       **** 	// TSPX(GPE4_Q4(-)) TSPY(GPE5_Q3(+)) TSMY(GPE6_Q2(-)) TSMX(GPE7_Q1(+))
+  47:../tp.c       ****     //       1               0                 0                1
+  48:../tp.c       **** 	rPDATE=0x98;
+ 2830              		.loc 1 48 0
+ 2831 0110 80329FE5 		ldr	r3, .L14
+ 2832 0114 9820A0E3 		mov	r2, #152
+ 2833 0118 002083E5 		str	r2, [r3, #0]
+  49:../tp.c       **** 	rADCCON=0x0<<2;		        	// AIN0
+ 2834              		.loc 1 49 0
+ 2835 011c 7537A0E3 		mov	r3, #30670848
+ 2836 0120 0020A0E3 		mov	r2, #0
+ 2837 0124 002083E5 		str	r2, [r3, #0]
+  50:../tp.c       **** 	
+  51:../tp.c       **** 	Delay(1000);                // delay to set up the next channel
+ 2838              		.loc 1 51 0
+ 2839 0128 FA0FA0E3 		mov	r0, #1000
+ 2840 012c FEFFFFEB 		bl	Delay
+  52:../tp.c       **** 	for( i=0; i<5; i++ )
+ 2841              		.loc 1 52 0
+ 2842 0130 0030A0E3 		mov	r3, #0
+ 2843 0134 20300BE5 		str	r3, [fp, #-32]
+ 2844 0138 1F0000EA 		b	.L6
+ 2845              	.L9:
+  53:../tp.c       **** 	{
+  54:../tp.c       ****     	rADCCON |= 0x1;             // Start Y-position conversion
+ 2846              		.loc 1 54 0
+ 2847 013c 7537A0E3 		mov	r3, #30670848
+ 2848 0140 7527A0E3 		mov	r2, #30670848
+ 2849 0144 002092E5 		ldr	r2, [r2, #0]
+ 2850 0148 012082E3 		orr	r2, r2, #1
+ 2851 014c 002083E5 		str	r2, [r3, #0]
+  55:../tp.c       **** 	    while( rADCCON & 0x1 );     // Check if Enable_start is low
+ 2852              		.loc 1 55 0
+ 2853 0150 0000A0E1 		mov	r0, r0	@ nop
+ 2854              	.L7:
+ 2855              		.loc 1 55 0 is_stmt 0 discriminator 1
+ 2856 0154 7537A0E3 		mov	r3, #30670848
+ 2857 0158 003093E5 		ldr	r3, [r3, #0]
+ 2858 015c 013003E2 		and	r3, r3, #1
+ 2859 0160 FF3003E2 		and	r3, r3, #255
+ 2860 0164 000053E3 		cmp	r3, #0
+ 2861 0168 F9FFFF1A 		bne	.L7
+  56:../tp.c       ****     	while( !(rADCCON & 0x40) ); // Check ECFLG
+ 2862              		.loc 1 56 0 is_stmt 1
+ 2863 016c 0000A0E1 		mov	r0, r0	@ nop
+ 2864              	.L8:
+ 2865              		.loc 1 56 0 is_stmt 0 discriminator 1
+ 2866 0170 7537A0E3 		mov	r3, #30670848
+ 2867 0174 003093E5 		ldr	r3, [r3, #0]
+ 2868 0178 403003E2 		and	r3, r3, #64
+ 2869 017c 000053E3 		cmp	r3, #0
+ 2870 0180 FAFFFF0A 		beq	.L8
+  57:../tp.c       **** 	    Pt[i] = (0x3ff&rADCDAT);
+ 2871              		.loc 1 57 0 is_stmt 1
+ 2872 0184 10329FE5 		ldr	r3, .L14+4
+ 2873 0188 003093E5 		ldr	r3, [r3, #0]
+ 2874 018c 033BA0E1 		mov	r3, r3, asl #22
+ 2875 0190 233BA0E1 		mov	r3, r3, lsr #22
+ 2876 0194 20101BE5 		ldr	r1, [fp, #-32]
+ 2877 0198 2320E0E3 		mvn	r2, #35
+ 2878 019c 0111A0E1 		mov	r1, r1, asl #2
+ 2879 01a0 1C004BE2 		sub	r0, fp, #28
+ 2880 01a4 011080E0 		add	r1, r0, r1
+ 2881 01a8 022081E0 		add	r2, r1, r2
+ 2882 01ac 003082E5 		str	r3, [r2, #0]
+  52:../tp.c       **** 	for( i=0; i<5; i++ )
+ 2883              		.loc 1 52 0
+ 2884 01b0 20301BE5 		ldr	r3, [fp, #-32]
+ 2885 01b4 013083E2 		add	r3, r3, #1
+ 2886 01b8 20300BE5 		str	r3, [fp, #-32]
+ 2887              	.L6:
+  52:../tp.c       **** 	for( i=0; i<5; i++ )
+ 2888              		.loc 1 52 0 is_stmt 0 discriminator 1
+ 2889 01bc 20301BE5 		ldr	r3, [fp, #-32]
+ 2890 01c0 040053E3 		cmp	r3, #4
+ 2891 01c4 DCFFFFDA 		ble	.L9
+  58:../tp.c       **** 	}
+  59:../tp.c       **** 	// read Y-position average value
+  60:../tp.c       **** 	Pt[5] = (Pt[0]+Pt[1]+Pt[2]+Pt[3]+Pt[4])/5;
+ 2892              		.loc 1 60 0 is_stmt 1
+ 2893 01c8 40201BE5 		ldr	r2, [fp, #-64]
+ 2894 01cc 3C301BE5 		ldr	r3, [fp, #-60]
+ 2895 01d0 032082E0 		add	r2, r2, r3
+ 2896 01d4 38301BE5 		ldr	r3, [fp, #-56]
+ 2897 01d8 032082E0 		add	r2, r2, r3
+ 2898 01dc 34301BE5 		ldr	r3, [fp, #-52]
+ 2899 01e0 032082E0 		add	r2, r2, r3
+ 2900 01e4 30301BE5 		ldr	r3, [fp, #-48]
+ 2901 01e8 032082E0 		add	r2, r2, r3
+ 2902 01ec AC319FE5 		ldr	r3, .L14+8
+ 2903 01f0 921383E0 		umull	r1, r3, r2, r3
+ 2904 01f4 2331A0E1 		mov	r3, r3, lsr #2
+ 2905 01f8 2C300BE5 		str	r3, [fp, #-44]
+  61:../tp.c       ****      
+  62:../tp.c       **** 	if(!(CheckTSP|(tmp < Xmin)|(tmp > Xmax)|(Pt[5] < Ymin)|(Pt[5] > Ymax)))   // Is valid value?
+ 2906              		.loc 1 62 0
+ 2907 01fc A0319FE5 		ldr	r3, .L14+12
+ 2908 0200 003093E5 		ldr	r3, [r3, #0]
+ 2909 0204 24201BE5 		ldr	r2, [fp, #-36]
+ 2910 0208 030052E1 		cmp	r2, r3
+ 2911 020c 0020A023 		movcs	r2, #0
+ 2912 0210 0120A033 		movcc	r2, #1
+ 2913 0214 8C319FE5 		ldr	r3, .L14+16
+ 2914 0218 003093E5 		ldr	r3, [r3, #0]
+ 2915 021c 032082E1 		orr	r2, r2, r3
+ 2916 0220 84319FE5 		ldr	r3, .L14+20
+ 2917 0224 003093E5 		ldr	r3, [r3, #0]
+ 2918 0228 24101BE5 		ldr	r1, [fp, #-36]
+ 2919 022c 030051E1 		cmp	r1, r3
+ 2920 0230 0030A093 		movls	r3, #0
+ 2921 0234 0130A083 		movhi	r3, #1
+ 2922 0238 032082E1 		orr	r2, r2, r3
+ 2923 023c 2C101BE5 		ldr	r1, [fp, #-44]
+ 2924 0240 68319FE5 		ldr	r3, .L14+24
+ 2925 0244 003093E5 		ldr	r3, [r3, #0]
+ 2926 0248 030051E1 		cmp	r1, r3
+ 2927 024c 0030A023 		movcs	r3, #0
+ 2928 0250 0130A033 		movcc	r3, #1
+ 2929 0254 032082E1 		orr	r2, r2, r3
+ 2930 0258 2C101BE5 		ldr	r1, [fp, #-44]
+ 2931 025c 50319FE5 		ldr	r3, .L14+28
+ 2932 0260 003093E5 		ldr	r3, [r3, #0]
+ 2933 0264 030051E1 		cmp	r1, r3
+ 2934 0268 0030A093 		movls	r3, #0
+ 2935 026c 0130A083 		movhi	r3, #1
+ 2936 0270 033082E1 		orr	r3, r2, r3
+ 2937 0274 000053E3 		cmp	r3, #0
+ 2938 0278 2500001A 		bne	.L10
+  63:../tp.c       **** 	  {
+  64:../tp.c       **** 		tmp = 320*(tmp - Xmin)/(Xmax - Xmin);   // X - position
+ 2939              		.loc 1 64 0
+ 2940 027c 20319FE5 		ldr	r3, .L14+12
+ 2941 0280 003093E5 		ldr	r3, [r3, #0]
+ 2942 0284 24201BE5 		ldr	r2, [fp, #-36]
+ 2943 0288 022063E0 		rsb	r2, r3, r2
+ 2944 028c 0230A0E1 		mov	r3, r2
+ 2945 0290 0331A0E1 		mov	r3, r3, asl #2
+ 2946 0294 023083E0 		add	r3, r3, r2
+ 2947 0298 0333A0E1 		mov	r3, r3, asl #6
+ 2948 029c 0320A0E1 		mov	r2, r3
+ 2949 02a0 04319FE5 		ldr	r3, .L14+20
+ 2950 02a4 001093E5 		ldr	r1, [r3, #0]
+ 2951 02a8 F4309FE5 		ldr	r3, .L14+12
+ 2952 02ac 003093E5 		ldr	r3, [r3, #0]
+ 2953 02b0 013063E0 		rsb	r3, r3, r1
+ 2954 02b4 0200A0E1 		mov	r0, r2
+ 2955 02b8 0310A0E1 		mov	r1, r3
+ 2956 02bc FEFFFFEB 		bl	__aeabi_uidiv
+ 2957 02c0 0030A0E1 		mov	r3, r0
+ 2958 02c4 24300BE5 		str	r3, [fp, #-36]
+  65:../tp.c       **** //		Uart_Printf("X-Posion[AIN1] is %04d   ", tmp);
+  66:../tp.c       **** 			
+  67:../tp.c       **** 		Pt[5] = 240*(Pt[5] - Xmin)/(Ymax - Ymin);
+ 2959              		.loc 1 67 0
+ 2960 02c8 2C201BE5 		ldr	r2, [fp, #-44]
+ 2961 02cc D0309FE5 		ldr	r3, .L14+12
+ 2962 02d0 003093E5 		ldr	r3, [r3, #0]
+ 2963 02d4 022063E0 		rsb	r2, r3, r2
+ 2964 02d8 0230A0E1 		mov	r3, r2
+ 2965 02dc 0332A0E1 		mov	r3, r3, asl #4
+ 2966 02e0 033062E0 		rsb	r3, r2, r3
+ 2967 02e4 0332A0E1 		mov	r3, r3, asl #4
+ 2968 02e8 0320A0E1 		mov	r2, r3
+ 2969 02ec C0309FE5 		ldr	r3, .L14+28
+ 2970 02f0 001093E5 		ldr	r1, [r3, #0]
+ 2971 02f4 B4309FE5 		ldr	r3, .L14+24
+ 2972 02f8 003093E5 		ldr	r3, [r3, #0]
+ 2973 02fc 013063E0 		rsb	r3, r3, r1
+ 2974 0300 0200A0E1 		mov	r0, r2
+ 2975 0304 0310A0E1 		mov	r1, r3
+ 2976 0308 FEFFFFEB 		bl	__aeabi_uidiv
+ 2977 030c 0030A0E1 		mov	r3, r0
+ 2978 0310 2C300BE5 		str	r3, [fp, #-44]
+ 2979              	.L10:
+  68:../tp.c       **** //		Uart_Printf("  Y-Posion[AIN0] is %04d\n", Pt[5]);
+  69:../tp.c       ****       }
+  70:../tp.c       **** 
+  71:../tp.c       ****     if(CheckTSP)
+ 2980              		.loc 1 71 0
+ 2981 0314 8C309FE5 		ldr	r3, .L14+16
+ 2982 0318 003093E5 		ldr	r3, [r3, #0]
+ 2983 031c 000053E3 		cmp	r3, #0
+ 2984 0320 0300000A 		beq	.L11
+  72:../tp.c       ****  	/*----------- check to ensure Xmax Ymax Xmin Ymin ------------*/
+  73:../tp.c       ****  	    DesignREC(tmp,Pt[5]);
+ 2985              		.loc 1 73 0
+ 2986 0324 2C301BE5 		ldr	r3, [fp, #-44]
+ 2987 0328 24001BE5 		ldr	r0, [fp, #-36]
+ 2988 032c 0310A0E1 		mov	r1, r3
+ 2989 0330 FEFFFFEB 		bl	DesignREC
+ 2990              	.L11:
+  74:../tp.c       **** 
+  75:../tp.c       **** 	rPDATE = 0xb8;                  // should be enabled	
+ 2991              		.loc 1 75 0
+ 2992 0334 5C309FE5 		ldr	r3, .L14
+ 2993 0338 B820A0E3 		mov	r2, #184
+ 2994 033c 002083E5 		str	r2, [r3, #0]
+  76:../tp.c       **** 	Delay(3000);                // delay to set up the next channel
+ 2995              		.loc 1 76 0
+ 2996 0340 70009FE5 		ldr	r0, .L14+32
+ 2997 0344 FEFFFFEB 		bl	Delay
+  77:../tp.c       **** 
+  78:../tp.c       ****     rI_ISPC |= BIT_EINT2;            // clear pending_bit
+ 2998              		.loc 1 78 0
+ 2999 0348 6C309FE5 		ldr	r3, .L14+36
+ 3000 034c 68209FE5 		ldr	r2, .L14+36
+ 3001 0350 002092E5 		ldr	r2, [r2, #0]
+ 3002 0354 022582E3 		orr	r2, r2, #8388608
+ 3003 0358 002083E5 		str	r2, [r3, #0]
+  79:../tp.c       **** 
+  80:../tp.c       ****     if(!primera_pulsacion)
+ 3004              		.loc 1 80 0
+ 3005 035c 5C309FE5 		ldr	r3, .L14+40
+ 3006 0360 003093E5 		ldr	r3, [r3, #0]
+ 3007 0364 000053E3 		cmp	r3, #0
+ 3008 0368 0300001A 		bne	.L12
+  81:../tp.c       ****     	push_debug(EVENTO_PULSACION_TACTIL,1);
+ 3009              		.loc 1 81 0
+ 3010 036c 1100A0E3 		mov	r0, #17
+ 3011 0370 0110A0E3 		mov	r1, #1
+ 3012 0374 FEFFFFEB 		bl	push_debug
+ 3013 0378 020000EA 		b	.L1
+ 3014              	.L12:
+  82:../tp.c       **** 	else
+  83:../tp.c       **** 		primera_pulsacion = 0;
+ 3015              		.loc 1 83 0
+ 3016 037c 3C309FE5 		ldr	r3, .L14+40
+ 3017 0380 0020A0E3 		mov	r2, #0
+ 3018 0384 002083E5 		str	r2, [r3, #0]
+ 3019              	.L1:
+  84:../tp.c       **** }
+ 3020              		.loc 1 84 0
+ 3021 0388 1CD04BE2 		sub	sp, fp, #28
+ 3022 038c 0F689DE8 		ldmfd	sp, {r0, r1, r2, r3, fp, sp, lr}
+ 3023 0390 04C09DE4 		ldmfd	sp!, {ip}
+ 3024 0394 04F05EE2 		subs	pc, lr, #4
+ 3025              	.L15:
+ 3026              		.align	2
+ 3027              	.L14:
+ 3028 0398 2C00D201 		.word	30539820
+ 3029 039c 0800D401 		.word	30670856
+ 3030 03a0 CDCCCCCC 		.word	-858993459
+ 3031 03a4 00000000 		.word	Xmin
+ 3032 03a8 00000000 		.word	CheckTSP
+ 3033 03ac 00000000 		.word	Xmax
+ 3034 03b0 00000000 		.word	Ymin
+ 3035 03b4 00000000 		.word	Ymax
+ 3036 03b8 B80B0000 		.word	3000
+ 3037 03bc 2400E001 		.word	31457316
+ 3038 03c0 00000000 		.word	primera_pulsacion
+ 3039              		.cfi_endproc
+ 3040              	.LFE0:
+ 3042              		.align	2
+ 3043              		.global	TS_init
+ 3045              	TS_init:
+ 3046              	.LFB1:
+  85:../tp.c       **** 			
+  86:../tp.c       **** /*********************************************************************************************
+  87:../tp.c       **** * name:		TS_init
+  88:../tp.c       **** * func:		initialize TouchScreen
+  89:../tp.c       **** * para:		none
+  90:../tp.c       **** * ret:		none
+  91:../tp.c       **** * modify:
+  92:../tp.c       **** * comment:		
+  93:../tp.c       **** *********************************************************************************************/
+  94:../tp.c       **** void TS_init(void)
+  95:../tp.c       **** {
+ 3047              		.loc 1 95 0
+ 3048              		.cfi_startproc
+ 3049              		@ Function supports interworking.
+ 3050              		@ args = 0, pretend = 0, frame = 0
+ 3051              		@ frame_needed = 1, uses_anonymous_args = 0
+ 3052 03c4 0DC0A0E1 		mov	ip, sp
+ 3053              	.LCFI2:
+ 3054              		.cfi_def_cfa_register 12
+ 3055 03c8 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 3056 03cc 04B04CE2 		sub	fp, ip, #4
+ 3057              		.cfi_offset 14, -8
+ 3058              		.cfi_offset 13, -12
+ 3059              		.cfi_offset 11, -16
+ 3060              	.LCFI3:
+ 3061              		.cfi_def_cfa 11, 4
+  96:../tp.c       **** 	primera_pulsacion = 1;
+ 3062              		.loc 1 96 0
+ 3063 03d0 9C309FE5 		ldr	r3, .L17
+ 3064 03d4 0120A0E3 		mov	r2, #1
+ 3065 03d8 002083E5 		str	r2, [r3, #0]
+  97:../tp.c       ****     rI_ISPC |= BIT_EINT2;            // clear pending_bit
+ 3066              		.loc 1 97 0
+ 3067 03dc 94309FE5 		ldr	r3, .L17+4
+ 3068 03e0 90209FE5 		ldr	r2, .L17+4
+ 3069 03e4 002092E5 		ldr	r2, [r2, #0]
+ 3070 03e8 022582E3 		orr	r2, r2, #8388608
+ 3071 03ec 002083E5 		str	r2, [r3, #0]
+  98:../tp.c       **** 
+  99:../tp.c       **** 	// TSPX(GPE4_Q4(-)) TSPY(GPE5_Q3(-)) TSMY(GPE6_Q2(-)) TSMX(GPE7_Q1(+)) 
+ 100:../tp.c       **** 	//          1               1                0                 1
+ 101:../tp.c       ****     rPUPE  = 0x0;	                 // Pull up
+ 3072              		.loc 1 101 0
+ 3073 03f0 84309FE5 		ldr	r3, .L17+8
+ 3074 03f4 0020A0E3 		mov	r2, #0
+ 3075 03f8 002083E5 		str	r2, [r3, #0]
+ 102:../tp.c       ****     rPDATE = 0xb8;                   // should be enabled	
+ 3076              		.loc 1 102 0
+ 3077 03fc 7C309FE5 		ldr	r3, .L17+12
+ 3078 0400 B820A0E3 		mov	r2, #184
+ 3079 0404 002083E5 		str	r2, [r3, #0]
+ 103:../tp.c       ****     Delay(100);
+ 3080              		.loc 1 103 0
+ 3081 0408 6400A0E3 		mov	r0, #100
+ 3082 040c FEFFFFEB 		bl	Delay
+ 104:../tp.c       ****     
+ 105:../tp.c       ****     rEXTINT |= 0x200;                // falling edge trigger
+ 3083              		.loc 1 105 0
+ 3084 0410 6C309FE5 		ldr	r3, .L17+16
+ 3085 0414 68209FE5 		ldr	r2, .L17+16
+ 3086 0418 002092E5 		ldr	r2, [r2, #0]
+ 3087 041c 022C82E3 		orr	r2, r2, #512
+ 3088 0420 002083E5 		str	r2, [r3, #0]
+ 106:../tp.c       ****     pISR_EINT2=(unsigned *)TSInt;       // set interrupt handler
+ 3089              		.loc 1 106 0
+ 3090 0424 5C309FE5 		ldr	r3, .L17+20
+ 3091 0428 5C209FE5 		ldr	r2, .L17+24
+ 3092 042c 002083E5 		str	r2, [r3, #0]
+ 107:../tp.c       ****     
+ 108:../tp.c       ****     rCLKCON = 0x7ff8;                // enable clock
+ 3093              		.loc 1 108 0
+ 3094 0430 58309FE5 		ldr	r3, .L17+28
+ 3095 0434 58209FE5 		ldr	r2, .L17+32
+ 3096 0438 002083E5 		str	r2, [r3, #0]
+ 109:../tp.c       ****     rADCPSR = 0x1;//0x4;             // A/D prescaler
+ 3097              		.loc 1 109 0
+ 3098 043c 54309FE5 		ldr	r3, .L17+36
+ 3099 0440 0120A0E3 		mov	r2, #1
+ 3100 0444 002083E5 		str	r2, [r3, #0]
+ 110:../tp.c       ****     rINTMSK &= ~(BIT_EINT2);
+ 3101              		.loc 1 110 0
+ 3102 0448 4C309FE5 		ldr	r3, .L17+40
+ 3103 044c 48209FE5 		ldr	r2, .L17+40
+ 3104 0450 002092E5 		ldr	r2, [r2, #0]
+ 3105 0454 0225C2E3 		bic	r2, r2, #8388608
+ 3106 0458 002083E5 		str	r2, [r3, #0]
+ 111:../tp.c       **** 
+ 112:../tp.c       ****     oneTouch = 0;
+ 3107              		.loc 1 112 0
+ 3108 045c 3C309FE5 		ldr	r3, .L17+44
+ 3109 0460 0020A0E3 		mov	r2, #0
+ 3110 0464 002083E5 		str	r2, [r3, #0]
+ 113:../tp.c       **** }
+ 3111              		.loc 1 113 0
+ 3112 0468 0CD04BE2 		sub	sp, fp, #12
+ 3113 046c 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 3114 0470 1EFF2FE1 		bx	lr
+ 3115              	.L18:
+ 3116              		.align	2
+ 3117              	.L17:
+ 3118 0474 00000000 		.word	primera_pulsacion
+ 3119 0478 2400E001 		.word	31457316
+ 3120 047c 3000D201 		.word	30539824
+ 3121 0480 2C00D201 		.word	30539820
+ 3122 0484 5000D201 		.word	30539856
+ 3123 0488 7CFF7F0C 		.word	209715068
+ 3124 048c 00000000 		.word	TSInt
+ 3125 0490 0400D801 		.word	30932996
+ 3126 0494 F87F0000 		.word	32760
+ 3127 0498 0400D401 		.word	30670852
+ 3128 049c 0C00E001 		.word	31457292
+ 3129 04a0 00000000 		.word	oneTouch
+ 3130              		.cfi_endproc
+ 3131              	.LFE1:
+ 3133              		.align	2
+ 3134              		.global	TS_close
+ 3136              	TS_close:
+ 3137              	.LFB2:
+ 114:../tp.c       **** 
+ 115:../tp.c       **** /*********************************************************************************************
+ 116:../tp.c       **** * name:		TS_close
+ 117:../tp.c       **** * func:		close TouchScreen
+ 118:../tp.c       **** * para:		none
+ 119:../tp.c       **** * ret:		none
+ 120:../tp.c       **** * modify:
+ 121:../tp.c       **** * comment:		
+ 122:../tp.c       **** *********************************************************************************************/
+ 123:../tp.c       **** void TS_close(void)
+ 124:../tp.c       **** {
+ 3138              		.loc 1 124 0
+ 3139              		.cfi_startproc
+ 3140              		@ Function supports interworking.
+ 3141              		@ args = 0, pretend = 0, frame = 0
+ 3142              		@ frame_needed = 1, uses_anonymous_args = 0
+ 3143 04a4 0DC0A0E1 		mov	ip, sp
+ 3144              	.LCFI4:
+ 3145              		.cfi_def_cfa_register 12
+ 3146 04a8 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 3147 04ac 04B04CE2 		sub	fp, ip, #4
+ 3148              		.cfi_offset 14, -8
+ 3149              		.cfi_offset 13, -12
+ 3150              		.cfi_offset 11, -16
+ 3151              	.LCFI5:
+ 3152              		.cfi_def_cfa 11, 4
+ 125:../tp.c       **** 	/* Mask interrupt */
+ 126:../tp.c       **** 	rINTMSK |= BIT_EINT2;
+ 3153              		.loc 1 126 0
+ 3154 04b0 24309FE5 		ldr	r3, .L20
+ 3155 04b4 20209FE5 		ldr	r2, .L20
+ 3156 04b8 002092E5 		ldr	r2, [r2, #0]
+ 3157 04bc 022582E3 		orr	r2, r2, #8388608
+ 3158 04c0 002083E5 		str	r2, [r3, #0]
+ 127:../tp.c       **** 	pISR_EINT2 = (int)NULL;
+ 3159              		.loc 1 127 0
+ 3160 04c4 14309FE5 		ldr	r3, .L20+4
+ 3161 04c8 0020A0E3 		mov	r2, #0
+ 3162 04cc 002083E5 		str	r2, [r3, #0]
+ 128:../tp.c       **** }
+ 3163              		.loc 1 128 0
+ 3164 04d0 0CD04BE2 		sub	sp, fp, #12
+ 3165 04d4 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 3166 04d8 1EFF2FE1 		bx	lr
+ 3167              	.L21:
+ 3168              		.align	2
+ 3169              	.L20:
+ 3170 04dc 0C00E001 		.word	31457292
+ 3171 04e0 7CFF7F0C 		.word	209715068
+ 3172              		.cfi_endproc
+ 3173              	.LFE2:
+ 3175              		.section	.rodata
+ 3176              		.align	2
+ 3177              	.LC0:
+ 3178 0000 3000     		.ascii	"0\000"
+ 3179 0002 0000     		.align	2
+ 3180              	.LC1:
+ 3181 0004 3100     		.ascii	"1\000"
+ 3182 0006 0000     		.align	2
+ 3183              	.LC2:
+ 3184 0008 3200     		.ascii	"2\000"
+ 3185 000a 0000     		.align	2
+ 3186              	.LC3:
+ 3187 000c 3300     		.ascii	"3\000"
+ 3188 000e 0000     		.align	2
+ 3189              	.LC4:
+ 3190 0010 3400     		.ascii	"4\000"
+ 3191 0012 0000     		.align	2
+ 3192              	.LC5:
+ 3193 0014 3500     		.ascii	"5\000"
+ 3194 0016 0000     		.align	2
+ 3195              	.LC6:
+ 3196 0018 3600     		.ascii	"6\000"
+ 3197 001a 0000     		.align	2
+ 3198              	.LC7:
+ 3199 001c 3700     		.ascii	"7\000"
+ 3200 001e 0000     		.align	2
+ 3201              	.LC8:
+ 3202 0020 3800     		.ascii	"8\000"
+ 3203 0022 0000     		.align	2
+ 3204              	.LC9:
+ 3205 0024 3900     		.ascii	"9\000"
+ 3206 0026 0000     		.align	2
+ 3207              	.LC10:
+ 3208 0028 4100     		.ascii	"A\000"
+ 3209 002a 0000     		.align	2
+ 3210              	.LC11:
+ 3211 002c 4200     		.ascii	"B\000"
+ 3212 002e 0000     		.align	2
+ 3213              	.LC12:
+ 3214 0030 4300     		.ascii	"C\000"
+ 3215 0032 0000     		.align	2
+ 3216              	.LC13:
+ 3217 0034 4400     		.ascii	"D\000"
+ 3218 0036 0000     		.align	2
+ 3219              	.LC14:
+ 3220 0038 4500     		.ascii	"E\000"
+ 3221 003a 0000     		.align	2
+ 3222              	.LC15:
+ 3223 003c 4600     		.ascii	"F\000"
+ 3224 003e 0000     		.text
+ 3225              		.align	2
+ 3226              		.global	Lcd_TC
+ 3228              	Lcd_TC:
+ 3229              	.LFB3:
+ 129:../tp.c       **** 
+ 130:../tp.c       **** void Lcd_TC(void)
+ 131:../tp.c       **** {
+ 3230              		.loc 1 131 0
+ 3231              		.cfi_startproc
+ 3232              		@ Function supports interworking.
+ 3233              		@ args = 0, pretend = 0, frame = 0
+ 3234              		@ frame_needed = 1, uses_anonymous_args = 0
+ 3235 04e4 0DC0A0E1 		mov	ip, sp
+ 3236              	.LCFI6:
+ 3237              		.cfi_def_cfa_register 12
+ 3238 04e8 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 3239 04ec 04B04CE2 		sub	fp, ip, #4
+ 3240              		.cfi_offset 14, -8
+ 3241              		.cfi_offset 13, -12
+ 3242              		.cfi_offset 11, -16
+ 3243              	.LCFI7:
+ 3244              		.cfi_def_cfa 11, 4
+ 3245 04f0 08D04DE2 		sub	sp, sp, #8
+ 132:../tp.c       **** 	/* initial LCD controller */
+ 133:../tp.c       **** 	Lcd_Init();
+ 3246              		.loc 1 133 0
+ 3247 04f4 FEFFFFEB 		bl	Lcd_Init
+ 134:../tp.c       **** 	/* clear screen */
+ 135:../tp.c       **** 	Lcd_Clr();
+ 3248              		.loc 1 135 0
+ 3249 04f8 FEFFFFEB 		bl	Lcd_Clr
+ 136:../tp.c       **** 	Lcd_Active_Clr();
+ 3250              		.loc 1 136 0
+ 3251 04fc FEFFFFEB 		bl	Lcd_Active_Clr
+ 137:../tp.c       **** 	/* draw rectangle pattern */ 
+ 138:../tp.c       **** 	Lcd_Draw_Box(0,0,80,60,15);
+ 3252              		.loc 1 138 0
+ 3253 0500 0F30A0E3 		mov	r3, #15
+ 3254 0504 00308DE5 		str	r3, [sp, #0]
+ 3255 0508 0000A0E3 		mov	r0, #0
+ 3256 050c 0010A0E3 		mov	r1, #0
+ 3257 0510 5020A0E3 		mov	r2, #80
+ 3258 0514 3C30A0E3 		mov	r3, #60
+ 3259 0518 FEFFFFEB 		bl	Lcd_Draw_Box
+ 139:../tp.c       **** 	Lcd_Draw_Box(80,0,160,60,15);
+ 3260              		.loc 1 139 0
+ 3261 051c 0F30A0E3 		mov	r3, #15
+ 3262 0520 00308DE5 		str	r3, [sp, #0]
+ 3263 0524 5000A0E3 		mov	r0, #80
+ 3264 0528 0010A0E3 		mov	r1, #0
+ 3265 052c A020A0E3 		mov	r2, #160
+ 3266 0530 3C30A0E3 		mov	r3, #60
+ 3267 0534 FEFFFFEB 		bl	Lcd_Draw_Box
+ 140:../tp.c       **** 	Lcd_Draw_Box(160,0,240,60,15);
+ 3268              		.loc 1 140 0
+ 3269 0538 0F30A0E3 		mov	r3, #15
+ 3270 053c 00308DE5 		str	r3, [sp, #0]
+ 3271 0540 A000A0E3 		mov	r0, #160
+ 3272 0544 0010A0E3 		mov	r1, #0
+ 3273 0548 F020A0E3 		mov	r2, #240
+ 3274 054c 3C30A0E3 		mov	r3, #60
+ 3275 0550 FEFFFFEB 		bl	Lcd_Draw_Box
+ 141:../tp.c       **** 	Lcd_Draw_Box(240,0,320,60,15);
+ 3276              		.loc 1 141 0
+ 3277 0554 0F30A0E3 		mov	r3, #15
+ 3278 0558 00308DE5 		str	r3, [sp, #0]
+ 3279 055c F000A0E3 		mov	r0, #240
+ 3280 0560 0010A0E3 		mov	r1, #0
+ 3281 0564 052DA0E3 		mov	r2, #320
+ 3282 0568 3C30A0E3 		mov	r3, #60
+ 3283 056c FEFFFFEB 		bl	Lcd_Draw_Box
+ 142:../tp.c       **** 	Lcd_Draw_Box(0,60,80,120,15);
+ 3284              		.loc 1 142 0
+ 3285 0570 0F30A0E3 		mov	r3, #15
+ 3286 0574 00308DE5 		str	r3, [sp, #0]
+ 3287 0578 0000A0E3 		mov	r0, #0
+ 3288 057c 3C10A0E3 		mov	r1, #60
+ 3289 0580 5020A0E3 		mov	r2, #80
+ 3290 0584 7830A0E3 		mov	r3, #120
+ 3291 0588 FEFFFFEB 		bl	Lcd_Draw_Box
+ 143:../tp.c       **** 	Lcd_Draw_Box(80,60,160,120,15);
+ 3292              		.loc 1 143 0
+ 3293 058c 0F30A0E3 		mov	r3, #15
+ 3294 0590 00308DE5 		str	r3, [sp, #0]
+ 3295 0594 5000A0E3 		mov	r0, #80
+ 3296 0598 3C10A0E3 		mov	r1, #60
+ 3297 059c A020A0E3 		mov	r2, #160
+ 3298 05a0 7830A0E3 		mov	r3, #120
+ 3299 05a4 FEFFFFEB 		bl	Lcd_Draw_Box
+ 144:../tp.c       **** 	Lcd_Draw_Box(160,60,240,120,15);
+ 3300              		.loc 1 144 0
+ 3301 05a8 0F30A0E3 		mov	r3, #15
+ 3302 05ac 00308DE5 		str	r3, [sp, #0]
+ 3303 05b0 A000A0E3 		mov	r0, #160
+ 3304 05b4 3C10A0E3 		mov	r1, #60
+ 3305 05b8 F020A0E3 		mov	r2, #240
+ 3306 05bc 7830A0E3 		mov	r3, #120
+ 3307 05c0 FEFFFFEB 		bl	Lcd_Draw_Box
+ 145:../tp.c       **** 	Lcd_Draw_Box(240,60,320,120,15);
+ 3308              		.loc 1 145 0
+ 3309 05c4 0F30A0E3 		mov	r3, #15
+ 3310 05c8 00308DE5 		str	r3, [sp, #0]
+ 3311 05cc F000A0E3 		mov	r0, #240
+ 3312 05d0 3C10A0E3 		mov	r1, #60
+ 3313 05d4 052DA0E3 		mov	r2, #320
+ 3314 05d8 7830A0E3 		mov	r3, #120
+ 3315 05dc FEFFFFEB 		bl	Lcd_Draw_Box
+ 146:../tp.c       **** 	Lcd_Draw_Box(0,120,80,180,15);
+ 3316              		.loc 1 146 0
+ 3317 05e0 0F30A0E3 		mov	r3, #15
+ 3318 05e4 00308DE5 		str	r3, [sp, #0]
+ 3319 05e8 0000A0E3 		mov	r0, #0
+ 3320 05ec 7810A0E3 		mov	r1, #120
+ 3321 05f0 5020A0E3 		mov	r2, #80
+ 3322 05f4 B430A0E3 		mov	r3, #180
+ 3323 05f8 FEFFFFEB 		bl	Lcd_Draw_Box
+ 147:../tp.c       **** 	Lcd_Draw_Box(80,120,160,180,15);
+ 3324              		.loc 1 147 0
+ 3325 05fc 0F30A0E3 		mov	r3, #15
+ 3326 0600 00308DE5 		str	r3, [sp, #0]
+ 3327 0604 5000A0E3 		mov	r0, #80
+ 3328 0608 7810A0E3 		mov	r1, #120
+ 3329 060c A020A0E3 		mov	r2, #160
+ 3330 0610 B430A0E3 		mov	r3, #180
+ 3331 0614 FEFFFFEB 		bl	Lcd_Draw_Box
+ 148:../tp.c       **** 	Lcd_Draw_Box(160,120,240,180,15);
+ 3332              		.loc 1 148 0
+ 3333 0618 0F30A0E3 		mov	r3, #15
+ 3334 061c 00308DE5 		str	r3, [sp, #0]
+ 3335 0620 A000A0E3 		mov	r0, #160
+ 3336 0624 7810A0E3 		mov	r1, #120
+ 3337 0628 F020A0E3 		mov	r2, #240
+ 3338 062c B430A0E3 		mov	r3, #180
+ 3339 0630 FEFFFFEB 		bl	Lcd_Draw_Box
+ 149:../tp.c       **** 	Lcd_Draw_Box(240,120,320,180,15);
+ 3340              		.loc 1 149 0
+ 3341 0634 0F30A0E3 		mov	r3, #15
+ 3342 0638 00308DE5 		str	r3, [sp, #0]
+ 3343 063c F000A0E3 		mov	r0, #240
+ 3344 0640 7810A0E3 		mov	r1, #120
+ 3345 0644 052DA0E3 		mov	r2, #320
+ 3346 0648 B430A0E3 		mov	r3, #180
+ 3347 064c FEFFFFEB 		bl	Lcd_Draw_Box
+ 150:../tp.c       **** 	Lcd_Draw_Box(0,180,80,240,15);
+ 3348              		.loc 1 150 0
+ 3349 0650 0F30A0E3 		mov	r3, #15
+ 3350 0654 00308DE5 		str	r3, [sp, #0]
+ 3351 0658 0000A0E3 		mov	r0, #0
+ 3352 065c B410A0E3 		mov	r1, #180
+ 3353 0660 5020A0E3 		mov	r2, #80
+ 3354 0664 F030A0E3 		mov	r3, #240
+ 3355 0668 FEFFFFEB 		bl	Lcd_Draw_Box
+ 151:../tp.c       **** 	Lcd_Draw_Box(80,180,160,240,15);
+ 3356              		.loc 1 151 0
+ 3357 066c 0F30A0E3 		mov	r3, #15
+ 3358 0670 00308DE5 		str	r3, [sp, #0]
+ 3359 0674 5000A0E3 		mov	r0, #80
+ 3360 0678 B410A0E3 		mov	r1, #180
+ 3361 067c A020A0E3 		mov	r2, #160
+ 3362 0680 F030A0E3 		mov	r3, #240
+ 3363 0684 FEFFFFEB 		bl	Lcd_Draw_Box
+ 152:../tp.c       **** 	Lcd_Draw_Box(160,180,240,240,15);
+ 3364              		.loc 1 152 0
+ 3365 0688 0F30A0E3 		mov	r3, #15
+ 3366 068c 00308DE5 		str	r3, [sp, #0]
+ 3367 0690 A000A0E3 		mov	r0, #160
+ 3368 0694 B410A0E3 		mov	r1, #180
+ 3369 0698 F020A0E3 		mov	r2, #240
+ 3370 069c F030A0E3 		mov	r3, #240
+ 3371 06a0 FEFFFFEB 		bl	Lcd_Draw_Box
+ 153:../tp.c       **** 	Lcd_Draw_Box(240,180,320,240,15);
+ 3372              		.loc 1 153 0
+ 3373 06a4 0F30A0E3 		mov	r3, #15
+ 3374 06a8 00308DE5 		str	r3, [sp, #0]
+ 3375 06ac F000A0E3 		mov	r0, #240
+ 3376 06b0 B410A0E3 		mov	r1, #180
+ 3377 06b4 052DA0E3 		mov	r2, #320
+ 3378 06b8 F030A0E3 		mov	r3, #240
+ 3379 06bc FEFFFFEB 		bl	Lcd_Draw_Box
+ 154:../tp.c       **** 	/* output ASCII symbol */
+ 155:../tp.c       **** 	Lcd_DspAscII6x8(37,26,BLACK,"0");
+ 3380              		.loc 1 155 0
+ 3381 06c0 2500A0E3 		mov	r0, #37
+ 3382 06c4 1A10A0E3 		mov	r1, #26
+ 3383 06c8 0F20A0E3 		mov	r2, #15
+ 3384 06cc 44319FE5 		ldr	r3, .L23
+ 3385 06d0 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 156:../tp.c       **** 	Lcd_DspAscII6x8(117,26,BLACK,"1");
+ 3386              		.loc 1 156 0
+ 3387 06d4 7500A0E3 		mov	r0, #117
+ 3388 06d8 1A10A0E3 		mov	r1, #26
+ 3389 06dc 0F20A0E3 		mov	r2, #15
+ 3390 06e0 34319FE5 		ldr	r3, .L23+4
+ 3391 06e4 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 157:../tp.c       **** 	Lcd_DspAscII6x8(197,26,BLACK,"2");
+ 3392              		.loc 1 157 0
+ 3393 06e8 C500A0E3 		mov	r0, #197
+ 3394 06ec 1A10A0E3 		mov	r1, #26
+ 3395 06f0 0F20A0E3 		mov	r2, #15
+ 3396 06f4 24319FE5 		ldr	r3, .L23+8
+ 3397 06f8 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 158:../tp.c       **** 	Lcd_DspAscII6x8(277,26,BLACK,"3");
+ 3398              		.loc 1 158 0
+ 3399 06fc 20019FE5 		ldr	r0, .L23+12
+ 3400 0700 1A10A0E3 		mov	r1, #26
+ 3401 0704 0F20A0E3 		mov	r2, #15
+ 3402 0708 18319FE5 		ldr	r3, .L23+16
+ 3403 070c FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 159:../tp.c       **** 	Lcd_DspAscII6x8(37,86,BLACK,"4");
+ 3404              		.loc 1 159 0
+ 3405 0710 2500A0E3 		mov	r0, #37
+ 3406 0714 5610A0E3 		mov	r1, #86
+ 3407 0718 0F20A0E3 		mov	r2, #15
+ 3408 071c 08319FE5 		ldr	r3, .L23+20
+ 3409 0720 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 160:../tp.c       **** 	Lcd_DspAscII6x8(117,86,BLACK,"5");
+ 3410              		.loc 1 160 0
+ 3411 0724 7500A0E3 		mov	r0, #117
+ 3412 0728 5610A0E3 		mov	r1, #86
+ 3413 072c 0F20A0E3 		mov	r2, #15
+ 3414 0730 F8309FE5 		ldr	r3, .L23+24
+ 3415 0734 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 161:../tp.c       **** 	Lcd_DspAscII6x8(197,86,BLACK,"6");
+ 3416              		.loc 1 161 0
+ 3417 0738 C500A0E3 		mov	r0, #197
+ 3418 073c 5610A0E3 		mov	r1, #86
+ 3419 0740 0F20A0E3 		mov	r2, #15
+ 3420 0744 E8309FE5 		ldr	r3, .L23+28
+ 3421 0748 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 162:../tp.c       **** 	Lcd_DspAscII6x8(277,86,BLACK,"7");
+ 3422              		.loc 1 162 0
+ 3423 074c D0009FE5 		ldr	r0, .L23+12
+ 3424 0750 5610A0E3 		mov	r1, #86
+ 3425 0754 0F20A0E3 		mov	r2, #15
+ 3426 0758 D8309FE5 		ldr	r3, .L23+32
+ 3427 075c FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 163:../tp.c       **** 	Lcd_DspAscII6x8(37,146,BLACK,"8");
+ 3428              		.loc 1 163 0
+ 3429 0760 2500A0E3 		mov	r0, #37
+ 3430 0764 9210A0E3 		mov	r1, #146
+ 3431 0768 0F20A0E3 		mov	r2, #15
+ 3432 076c C8309FE5 		ldr	r3, .L23+36
+ 3433 0770 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 164:../tp.c       **** 	Lcd_DspAscII6x8(117,146,BLACK,"9");
+ 3434              		.loc 1 164 0
+ 3435 0774 7500A0E3 		mov	r0, #117
+ 3436 0778 9210A0E3 		mov	r1, #146
+ 3437 077c 0F20A0E3 		mov	r2, #15
+ 3438 0780 B8309FE5 		ldr	r3, .L23+40
+ 3439 0784 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 165:../tp.c       **** 	Lcd_DspAscII6x8(197,146,BLACK,"A");
+ 3440              		.loc 1 165 0
+ 3441 0788 C500A0E3 		mov	r0, #197
+ 3442 078c 9210A0E3 		mov	r1, #146
+ 3443 0790 0F20A0E3 		mov	r2, #15
+ 3444 0794 A8309FE5 		ldr	r3, .L23+44
+ 3445 0798 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 166:../tp.c       **** 	Lcd_DspAscII6x8(277,146,BLACK,"B");
+ 3446              		.loc 1 166 0
+ 3447 079c 80009FE5 		ldr	r0, .L23+12
+ 3448 07a0 9210A0E3 		mov	r1, #146
+ 3449 07a4 0F20A0E3 		mov	r2, #15
+ 3450 07a8 98309FE5 		ldr	r3, .L23+48
+ 3451 07ac FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 167:../tp.c       **** 	Lcd_DspAscII6x8(37,206,BLACK,"C");
+ 3452              		.loc 1 167 0
+ 3453 07b0 2500A0E3 		mov	r0, #37
+ 3454 07b4 CE10A0E3 		mov	r1, #206
+ 3455 07b8 0F20A0E3 		mov	r2, #15
+ 3456 07bc 88309FE5 		ldr	r3, .L23+52
+ 3457 07c0 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 168:../tp.c       **** 	Lcd_DspAscII6x8(117,206,BLACK,"D");
+ 3458              		.loc 1 168 0
+ 3459 07c4 7500A0E3 		mov	r0, #117
+ 3460 07c8 CE10A0E3 		mov	r1, #206
+ 3461 07cc 0F20A0E3 		mov	r2, #15
+ 3462 07d0 78309FE5 		ldr	r3, .L23+56
+ 3463 07d4 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 169:../tp.c       **** 	Lcd_DspAscII6x8(197,206,BLACK,"E");
+ 3464              		.loc 1 169 0
+ 3465 07d8 C500A0E3 		mov	r0, #197
+ 3466 07dc CE10A0E3 		mov	r1, #206
+ 3467 07e0 0F20A0E3 		mov	r2, #15
+ 3468 07e4 68309FE5 		ldr	r3, .L23+60
+ 3469 07e8 FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 170:../tp.c       **** 	Lcd_DspAscII6x8(277,206,BLACK,"F");
+ 3470              		.loc 1 170 0
+ 3471 07ec 30009FE5 		ldr	r0, .L23+12
+ 3472 07f0 CE10A0E3 		mov	r1, #206
+ 3473 07f4 0F20A0E3 		mov	r2, #15
+ 3474 07f8 58309FE5 		ldr	r3, .L23+64
+ 3475 07fc FEFFFFEB 		bl	Lcd_DspAscII6x8
+ 171:../tp.c       **** 	Lcd_Dma_Trans();
+ 3476              		.loc 1 171 0
+ 3477 0800 FEFFFFEB 		bl	Lcd_Dma_Trans
+ 172:../tp.c       **** 	Delay(100);
+ 3478              		.loc 1 172 0
+ 3479 0804 6400A0E3 		mov	r0, #100
+ 3480 0808 FEFFFFEB 		bl	Delay
+ 173:../tp.c       **** }
+ 3481              		.loc 1 173 0
+ 3482 080c 0CD04BE2 		sub	sp, fp, #12
+ 3483 0810 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 3484 0814 1EFF2FE1 		bx	lr
+ 3485              	.L24:
+ 3486              		.align	2
+ 3487              	.L23:
+ 3488 0818 00000000 		.word	.LC0
+ 3489 081c 04000000 		.word	.LC1
+ 3490 0820 08000000 		.word	.LC2
+ 3491 0824 15010000 		.word	277
+ 3492 0828 0C000000 		.word	.LC3
+ 3493 082c 10000000 		.word	.LC4
+ 3494 0830 14000000 		.word	.LC5
+ 3495 0834 18000000 		.word	.LC6
+ 3496 0838 1C000000 		.word	.LC7
+ 3497 083c 20000000 		.word	.LC8
+ 3498 0840 24000000 		.word	.LC9
+ 3499 0844 28000000 		.word	.LC10
+ 3500 0848 2C000000 		.word	.LC11
+ 3501 084c 30000000 		.word	.LC12
+ 3502 0850 34000000 		.word	.LC13
+ 3503 0854 38000000 		.word	.LC14
+ 3504 0858 3C000000 		.word	.LC15
+ 3505              		.cfi_endproc
+ 3506              	.LFE3:
+ 3508              		.align	2
+ 3509              		.global	DesignREC
+ 3511              	DesignREC:
+ 3512              	.LFB4:
+ 174:../tp.c       **** 
+ 175:../tp.c       **** /*********************************************************************************************
+ 176:../tp.c       **** * name:		DesignREC
+ 177:../tp.c       **** * func:		confirm the coordinate rang
+ 178:../tp.c       **** * para:		none
+ 179:../tp.c       **** * ret:		none
+ 180:../tp.c       **** * modify:
+ 181:../tp.c       **** * comment:		
+ 182:../tp.c       **** *********************************************************************************************/
+ 183:../tp.c       **** void DesignREC(ULONG tx, ULONG ty)
+ 184:../tp.c       **** {
+ 3513              		.loc 1 184 0
+ 3514              		.cfi_startproc
+ 3515              		@ Function supports interworking.
+ 3516              		@ args = 0, pretend = 0, frame = 16
+ 3517              		@ frame_needed = 1, uses_anonymous_args = 0
+ 3518 085c 0DC0A0E1 		mov	ip, sp
+ 3519              	.LCFI8:
+ 3520              		.cfi_def_cfa_register 12
+ 3521 0860 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 3522 0864 04B04CE2 		sub	fp, ip, #4
+ 3523              		.cfi_offset 14, -8
+ 3524              		.cfi_offset 13, -12
+ 3525              		.cfi_offset 11, -16
+ 3526              	.LCFI9:
+ 3527              		.cfi_def_cfa 11, 4
+ 3528 0868 10D04DE2 		sub	sp, sp, #16
+ 3529 086c 18000BE5 		str	r0, [fp, #-24]
+ 3530 0870 1C100BE5 		str	r1, [fp, #-28]
+ 185:../tp.c       ****     int tm;
+ 186:../tp.c       ****     
+ 187:../tp.c       **** //  Uart_Printf("\n\r User touch coordinate(X,Y) is :");
+ 188:../tp.c       **** //	Uart_Printf("(%04d",tx);	
+ 189:../tp.c       **** //	Uart_Printf(",%04d)\n",ty);    
+ 190:../tp.c       ****     if(oneTouch == 0)
+ 3531              		.loc 1 190 0
+ 3532 0874 F4309FE5 		ldr	r3, .L30
+ 3533 0878 003093E5 		ldr	r3, [r3, #0]
+ 3534 087c 000053E3 		cmp	r3, #0
+ 3535 0880 0900001A 		bne	.L26
+ 191:../tp.c       ****      {
+ 192:../tp.c       ****        Vx = tx;                   // Vx as Xmax
+ 3536              		.loc 1 192 0
+ 3537 0884 E8309FE5 		ldr	r3, .L30+4
+ 3538 0888 18201BE5 		ldr	r2, [fp, #-24]
+ 3539 088c 002083E5 		str	r2, [r3, #0]
+ 193:../tp.c       ****        Vy = ty;                   // Vy as Ymax
+ 3540              		.loc 1 193 0
+ 3541 0890 E0309FE5 		ldr	r3, .L30+8
+ 3542 0894 1C201BE5 		ldr	r2, [fp, #-28]
+ 3543 0898 002083E5 		str	r2, [r3, #0]
+ 194:../tp.c       ****        oneTouch = 1;       		           
+ 3544              		.loc 1 194 0
+ 3545 089c CC309FE5 		ldr	r3, .L30
+ 3546 08a0 0120A0E3 		mov	r2, #1
+ 3547 08a4 002083E5 		str	r2, [r3, #0]
+ 3548 08a8 2D0000EA 		b	.L25
+ 3549              	.L26:
+ 195:../tp.c       ****     }else{
+ 196:../tp.c       ****     
+ 197:../tp.c       ****     if(Vx < tx )
+ 3550              		.loc 1 197 0
+ 3551 08ac C0309FE5 		ldr	r3, .L30+4
+ 3552 08b0 002093E5 		ldr	r2, [r3, #0]
+ 3553 08b4 18301BE5 		ldr	r3, [fp, #-24]
+ 3554 08b8 030052E1 		cmp	r2, r3
+ 3555 08bc 0700002A 		bcs	.L28
+ 198:../tp.c       ****      {
+ 199:../tp.c       ****        tm = tx; tx = Vx; Vx = tm; // tx as Xmin
+ 3556              		.loc 1 199 0
+ 3557 08c0 18301BE5 		ldr	r3, [fp, #-24]
+ 3558 08c4 10300BE5 		str	r3, [fp, #-16]
+ 3559 08c8 A4309FE5 		ldr	r3, .L30+4
+ 3560 08cc 003093E5 		ldr	r3, [r3, #0]
+ 3561 08d0 18300BE5 		str	r3, [fp, #-24]
+ 3562 08d4 10201BE5 		ldr	r2, [fp, #-16]
+ 3563 08d8 94309FE5 		ldr	r3, .L30+4
+ 3564 08dc 002083E5 		str	r2, [r3, #0]
+ 3565              	.L28:
+ 200:../tp.c       ****      }
+ 201:../tp.c       ****     if(Vy < ty )
+ 3566              		.loc 1 201 0
+ 3567 08e0 90309FE5 		ldr	r3, .L30+8
+ 3568 08e4 002093E5 		ldr	r2, [r3, #0]
+ 3569 08e8 1C301BE5 		ldr	r3, [fp, #-28]
+ 3570 08ec 030052E1 		cmp	r2, r3
+ 3571 08f0 0700002A 		bcs	.L29
+ 202:../tp.c       ****      { 
+ 203:../tp.c       ****        tm = ty; ty = Vy; Vy = tm; // ty as Ymin
+ 3572              		.loc 1 203 0
+ 3573 08f4 1C301BE5 		ldr	r3, [fp, #-28]
+ 3574 08f8 10300BE5 		str	r3, [fp, #-16]
+ 3575 08fc 74309FE5 		ldr	r3, .L30+8
+ 3576 0900 003093E5 		ldr	r3, [r3, #0]
+ 3577 0904 1C300BE5 		str	r3, [fp, #-28]
+ 3578 0908 10201BE5 		ldr	r2, [fp, #-16]
+ 3579 090c 64309FE5 		ldr	r3, .L30+8
+ 3580 0910 002083E5 		str	r2, [r3, #0]
+ 3581              	.L29:
+ 204:../tp.c       ****      }
+ 205:../tp.c       ****      
+ 206:../tp.c       ****     Xmax = Vx;    Xmin = tx;
+ 3582              		.loc 1 206 0
+ 3583 0914 58309FE5 		ldr	r3, .L30+4
+ 3584 0918 002093E5 		ldr	r2, [r3, #0]
+ 3585 091c 58309FE5 		ldr	r3, .L30+12
+ 3586 0920 002083E5 		str	r2, [r3, #0]
+ 3587 0924 54309FE5 		ldr	r3, .L30+16
+ 3588 0928 18201BE5 		ldr	r2, [fp, #-24]
+ 3589 092c 002083E5 		str	r2, [r3, #0]
+ 207:../tp.c       ****     Ymax = Vy;    Ymin = ty;
+ 3590              		.loc 1 207 0
+ 3591 0930 40309FE5 		ldr	r3, .L30+8
+ 3592 0934 002093E5 		ldr	r2, [r3, #0]
+ 3593 0938 44309FE5 		ldr	r3, .L30+20
+ 3594 093c 002083E5 		str	r2, [r3, #0]
+ 3595 0940 40309FE5 		ldr	r3, .L30+24
+ 3596 0944 1C201BE5 		ldr	r2, [fp, #-28]
+ 3597 0948 002083E5 		str	r2, [r3, #0]
+ 208:../tp.c       ****     
+ 209:../tp.c       ****     oneTouch = 0;
+ 3598              		.loc 1 209 0
+ 3599 094c 1C309FE5 		ldr	r3, .L30
+ 3600 0950 0020A0E3 		mov	r2, #0
+ 3601 0954 002083E5 		str	r2, [r3, #0]
+ 210:../tp.c       **** 	CheckTSP = 0;// has checked
+ 3602              		.loc 1 210 0
+ 3603 0958 2C309FE5 		ldr	r3, .L30+28
+ 3604 095c 0020A0E3 		mov	r2, #0
+ 3605 0960 002083E5 		str	r2, [r3, #0]
+ 3606              	.L25:
+ 211:../tp.c       **** 	
+ 212:../tp.c       **** 	}// end if(oneTouch == 0)
+ 213:../tp.c       **** 
+ 214:../tp.c       **** }
+ 3607              		.loc 1 214 0
+ 3608 0964 0CD04BE2 		sub	sp, fp, #12
+ 3609 0968 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 3610 096c 1EFF2FE1 		bx	lr
+ 3611              	.L31:
+ 3612              		.align	2
+ 3613              	.L30:
+ 3614 0970 00000000 		.word	oneTouch
+ 3615 0974 00000000 		.word	Vx
+ 3616 0978 00000000 		.word	Vy
+ 3617 097c 00000000 		.word	Xmax
+ 3618 0980 00000000 		.word	Xmin
+ 3619 0984 00000000 		.word	Ymax
+ 3620 0988 00000000 		.word	Ymin
+ 3621 098c 00000000 		.word	CheckTSP
+ 3622              		.cfi_endproc
+ 3623              	.LFE4:
+ 3625              		.align	2
+ 3626              		.global	Check_Sel
+ 3628              	Check_Sel:
+ 3629              	.LFB5:
+ 215:../tp.c       **** 
+ 216:../tp.c       **** void Check_Sel(void)
+ 217:../tp.c       **** {
+ 3630              		.loc 1 217 0
+ 3631              		.cfi_startproc
+ 3632              		@ Function supports interworking.
+ 3633              		@ args = 0, pretend = 0, frame = 8
+ 3634              		@ frame_needed = 1, uses_anonymous_args = 0
+ 3635 0990 0DC0A0E1 		mov	ip, sp
+ 3636              	.LCFI10:
+ 3637              		.cfi_def_cfa_register 12
+ 3638 0994 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 3639 0998 04B04CE2 		sub	fp, ip, #4
+ 3640              		.cfi_offset 14, -8
+ 3641              		.cfi_offset 13, -12
+ 3642              		.cfi_offset 11, -16
+ 3643              	.LCFI11:
+ 3644              		.cfi_def_cfa 11, 4
+ 3645 099c 08D04DE2 		sub	sp, sp, #8
+ 3646              	.L36:
+ 218:../tp.c       **** 	char yn;
+ 219:../tp.c       ****     
+ 220:../tp.c       **** 	do{
+ 221:../tp.c       **** 	  
+ 222:../tp.c       **** 		rINTMSK |=BIT_EINT2;
+ 3647              		.loc 1 222 0
+ 3648 09a0 D4309FE5 		ldr	r3, .L38
+ 3649 09a4 D0209FE5 		ldr	r2, .L38
+ 3650 09a8 002092E5 		ldr	r2, [r2, #0]
+ 3651 09ac 022582E3 		orr	r2, r2, #8388608
+ 3652 09b0 002083E5 		str	r2, [r3, #0]
+ 223:../tp.c       **** 		  //rINTMSK |=BIT_GLOBAL|BIT_EINT2;
+ 224:../tp.c       **** 
+ 225:../tp.c       **** //    Uart_Printf("\n\r Touch Screen coordinate Rang in:\n");
+ 226:../tp.c       **** //    Uart_Printf("   (Xmin,Ymin) is :(%04d,%04d)\n",Xmin,Ymin);	
+ 227:../tp.c       **** //	  Uart_Printf("   (Xmax,Ymax) is :(%04d,%04d)\n",Xmax,Ymax);	
+ 228:../tp.c       **** //	  Uart_Printf("\n  To use current settings. Press N/n key. ");
+ 229:../tp.c       **** //	  Uart_Printf("\n\n\r  Want to Set Again(Y/N)? ");	        	      
+ 230:../tp.c       **** //	  yn = Uart_Getch();
+ 231:../tp.c       ****       rI_ISPC = BIT_EINT2;              // clear pending_bit
+ 3653              		.loc 1 231 0
+ 3654 09b4 C4309FE5 		ldr	r3, .L38+4
+ 3655 09b8 0225A0E3 		mov	r2, #8388608
+ 3656 09bc 002083E5 		str	r2, [r3, #0]
+ 232:../tp.c       ****       //rINTMSK =~(BIT_GLOBAL|BIT_EINT2);
+ 233:../tp.c       ****       rINTMSK &= ~(BIT_EINT2);
+ 3657              		.loc 1 233 0
+ 3658 09c0 B4309FE5 		ldr	r3, .L38
+ 3659 09c4 B0209FE5 		ldr	r2, .L38
+ 3660 09c8 002092E5 		ldr	r2, [r2, #0]
+ 3661 09cc 0225C2E3 		bic	r2, r2, #8388608
+ 3662 09d0 002083E5 		str	r2, [r3, #0]
+ 234:../tp.c       **** //	  if((yn == 0x59)|(yn == 0x79)|(yn == 0x4E)|(yn == 0x6E)) Uart_SendByte(yn);	  
+ 235:../tp.c       **** 	  if((yn == 0x59)|(yn == 0x79))
+ 3663              		.loc 1 235 0
+ 3664 09d4 0D305BE5 		ldrb	r3, [fp, #-13]	@ zero_extendqisi2
+ 3665 09d8 590053E3 		cmp	r3, #89
+ 3666 09dc 0030A013 		movne	r3, #0
+ 3667 09e0 0130A003 		moveq	r3, #1
+ 3668 09e4 FF2003E2 		and	r2, r3, #255
+ 3669 09e8 0D305BE5 		ldrb	r3, [fp, #-13]	@ zero_extendqisi2
+ 3670 09ec 790053E3 		cmp	r3, #121
+ 3671 09f0 0030A013 		movne	r3, #0
+ 3672 09f4 0130A003 		moveq	r3, #1
+ 3673 09f8 FF3003E2 		and	r3, r3, #255
+ 3674 09fc 033082E1 		orr	r3, r2, r3
+ 3675 0a00 FF3003E2 		and	r3, r3, #255
+ 3676 0a04 000053E3 		cmp	r3, #0
+ 3677 0a08 1700000A 		beq	.L37
+ 236:../tp.c       **** 	    {
+ 237:../tp.c       **** //	      Uart_Printf("\n\n Touch TSP's Cornor to ensure Xmax,Ymax,Xmax,Xmin");	      
+ 238:../tp.c       **** 
+ 239:../tp.c       ****          //Init X Y rectangle
+ 240:../tp.c       ****           Xmax = 750;    Xmin = 200;
+ 3678              		.loc 1 240 0
+ 3679 0a0c 70309FE5 		ldr	r3, .L38+8
+ 3680 0a10 70209FE5 		ldr	r2, .L38+12
+ 3681 0a14 002083E5 		str	r2, [r3, #0]
+ 3682 0a18 6C309FE5 		ldr	r3, .L38+16
+ 3683 0a1c C820A0E3 		mov	r2, #200
+ 3684 0a20 002083E5 		str	r2, [r3, #0]
+ 241:../tp.c       ****           Ymax = 620;    Ymin = 120;
+ 3685              		.loc 1 241 0
+ 3686 0a24 64309FE5 		ldr	r3, .L38+20
+ 3687 0a28 9B2FA0E3 		mov	r2, #620
+ 3688 0a2c 002083E5 		str	r2, [r3, #0]
+ 3689 0a30 5C309FE5 		ldr	r3, .L38+24
+ 3690 0a34 7820A0E3 		mov	r2, #120
+ 3691 0a38 002083E5 		str	r2, [r3, #0]
+ 242:../tp.c       **** 
+ 243:../tp.c       **** 	      oneTouch = 0;
+ 3692              		.loc 1 243 0
+ 3693 0a3c 54309FE5 		ldr	r3, .L38+28
+ 3694 0a40 0020A0E3 		mov	r2, #0
+ 3695 0a44 002083E5 		str	r2, [r3, #0]
+ 244:../tp.c       **** 	      CheckTSP = 1; // mask to check
+ 3696              		.loc 1 244 0
+ 3697 0a48 4C309FE5 		ldr	r3, .L38+32
+ 3698 0a4c 0120A0E3 		mov	r2, #1
+ 3699 0a50 002083E5 		str	r2, [r3, #0]
+ 245:../tp.c       **** 	      while(CheckTSP);
+ 3700              		.loc 1 245 0
+ 3701 0a54 0000A0E1 		mov	r0, r0	@ nop
+ 3702              	.L34:
+ 3703              		.loc 1 245 0 is_stmt 0 discriminator 1
+ 3704 0a58 3C309FE5 		ldr	r3, .L38+32
+ 3705 0a5c 003093E5 		ldr	r3, [r3, #0]
+ 3706 0a60 000053E3 		cmp	r3, #0
+ 3707 0a64 FBFFFF1A 		bne	.L34
+ 246:../tp.c       **** 	      
+ 247:../tp.c       **** 	    }else break;	    
+ 248:../tp.c       **** 	  
+ 249:../tp.c       **** 	}while(1);
+ 3708              		.loc 1 249 0 is_stmt 1
+ 3709 0a68 CCFFFFEA 		b	.L36
+ 3710              	.L37:
+ 250:../tp.c       **** 	
+ 251:../tp.c       **** }
+ 3711              		.loc 1 251 0
+ 3712 0a6c 0000A0E1 		mov	r0, r0	@ nop
+ 3713              	.L32:
+ 3714 0a70 0CD04BE2 		sub	sp, fp, #12
+ 3715 0a74 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 3716 0a78 1EFF2FE1 		bx	lr
+ 3717              	.L39:
+ 3718              		.align	2
+ 3719              	.L38:
+ 3720 0a7c 0C00E001 		.word	31457292
+ 3721 0a80 2400E001 		.word	31457316
+ 3722 0a84 00000000 		.word	Xmax
+ 3723 0a88 EE020000 		.word	750
+ 3724 0a8c 00000000 		.word	Xmin
+ 3725 0a90 00000000 		.word	Ymax
+ 3726 0a94 00000000 		.word	Ymin
+ 3727 0a98 00000000 		.word	oneTouch
+ 3728 0a9c 00000000 		.word	CheckTSP
+ 3729              		.cfi_endproc
+ 3730              	.LFE5:
+ 3732              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 tp.c
+                            *COM*:00000004 CheckTSP
+                            *COM*:00000004 oneTouch
+                            *COM*:00000004 Vx
+                            *COM*:00000004 Vy
+                            *COM*:00000004 Xmax
+                            *COM*:00000004 Ymax
+                            *COM*:00000004 Xmin
+                            *COM*:00000004 Ymin
+                            *COM*:00000004 transferencia_completa
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:2715   .data:00000000 $d
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:2718   .data:00000000 primera_pulsacion
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:2722   .text:00000000 $a
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:2725   .text:00000000 TSInt
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:3511   .text:0000085c DesignREC
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:3028   .text:00000398 $d
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:3042   .text:000003c4 $a
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:3045   .text:000003c4 TS_init
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:3118   .text:00000474 $d
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:3133   .text:000004a4 $a
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:3136   .text:000004a4 TS_close
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:3170   .text:000004dc $d
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:3176   .rodata:00000000 $d
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:3225   .text:000004e4 $a
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:3228   .text:000004e4 Lcd_TC
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:3488   .text:00000818 $d
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:3508   .text:0000085c $a
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:3614   .text:00000970 $d
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:3625   .text:00000990 $a
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:3628   .text:00000990 Check_Sel
+C:\Users\Martin\AppData\Local\Temp\ccVRmuRu.s:3720   .text:00000a7c $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+__aeabi_uidiv
+Delay
+push_debug
+Lcd_Init
+Lcd_Clr
+Lcd_Active_Clr
+Lcd_Draw_Box
+Lcd_DspAscII6x8
+Lcd_Dma_Trans

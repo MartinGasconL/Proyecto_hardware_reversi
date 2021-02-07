@@ -1,0 +1,21 @@
+
+#include "stdint.h"
+
+enum {
+	MOSTRAR_GANAN_BLANCAS = 0x11,
+	MOSTRAR_GANAN_NEGRAS = 0x22,
+	MOSTRAR_PANTALLA_INICIO = 0x33,
+	ACTUALIZAR_TABLERO = 0x44,
+	MOVER_FICHA_SELECCION_DERECHA = 0x55,
+	MOVER_FICHA_SELECCION_ABAJO = 0x66,
+	ACTUALIZAR_TIEMPO = 0x77,
+	MOSTRAR_INFO = 0x88,
+	MOSTRAR_PANTALLA_SELECCION = 0x99,
+	MOSTRAR_PROFILING = 0xAA
+};
+
+void encolar_tabajo(int id_trabajo);
+void init_cola();
+int hay_trabajos_encolados();
+int obtener_trabajo();
+void mostrar_cola();

@@ -1,0 +1,64 @@
+/*********************************************************************************************
+* Fichero:      timer1.c
+* Autor:
+* Descrip:      funciones de control del timer1 del s3c44b0x
+* Version:
+*********************************************************************************************/
+
+/*--- ficheros de cabecera ---*/
+#include "44b.h"
+#include "button.h"
+#include "debug_stack.h"
+
+/*--- variables globales ---*/
+unsigned volatile int timer1_num_int = 0;
+
+/*--- declaracion de funciones ---*/
+void timer1_ISR(void) __attribute__((interrupt("IRQ")));
+void timer1_inicializar(void);
+
+/*--- codigo de las funciones ---*/
+
+void timer1_ISR(void){
+    timer1_num_int++; //incrementamos el numero de interrupciones
+    //push_debug(0xEE, timer1_num_int);
+    push_debug(EVENTO_TICK_TIMER1, timer1_num_int);
+
+    rI_ISPC |= BIT_TIMER1; // BIT_TIMER1 está definido en 44b.h y pone un uno en el bit que correponde al Timer2
+}
+void timer1_inicializar(void){
+	/* Configuraion controlador de interrupciones */
+
+	rINTMSK &= ~(BIT_TIMER1); 						// Emascara todas las lineas excepto Timer1
+
+	pISR_TIMER1 = (unsigned) timer1_ISR; 			// Establece la rutina de servicio para TIMER1
+
+	/* Configuraion del timer */
+
+	rTCFG0 &= 0xFFFF00FF;			//  Prescalado a 0 de los timer 2, 3 y 4
+	rTCFG1 &= ~ 0xC0;				//  Segundo byte a 3 (divisor a 1/16)
+	rTCFG1 |=  0x30;				//  Segundo byte a 3 (divisor a 1/16)
+	rTCNTB1 = 40000;				// 	40000 tics con el divisor a 1/4 provoca una interrupcion cada ms
+	rTCMPB1 = 0;
+
+	rTCON &= ~ 0xF00;				//	limpio la configuración
+	rTCON |= 1 << 9;				//  Manual update(9) a 1 y el resto a 0
+	rTCON &= ~ 0xF00;				//	limpio la configuración
+	rTCON |= 1 << 11;				//  autoreload(11) a 1 y el resto a 0 (Manual-update también)
+}
+
+
+
+void timer1_empezar(void){
+	timer1_num_int = 0;
+
+	rTCON &= ~ 0xF00;				//	limpio la configuración
+	rTCON |= 1 << 9;				//  Manual update(9) a 1 y el resto a 0
+	rTCON &= ~ 0xF00;				//	limpio la configuración
+	rTCON |= 0x900;					//	autoreload(11) y start(8) a 1
+
+}
+
+void timer1_parar(void){
+	rTCON &= ~(1 << 8);			//Paramos el timer
+}

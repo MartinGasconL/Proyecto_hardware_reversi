@@ -1,0 +1,356 @@
+/*********************************************************************************************
+* Fichero:	pantalla_reversi.c
+* Autor: Eduardo Ruiz y Martin Gascon
+* Descrip: 	Fichero fuente dedicado a la impresion por pantalla
+* Version:  <P4-ARM.timer-leds>
+*********************************************************************************************/
+
+#include "pantalla_reversi.h"
+#include "jugada_por_pantalla.h"
+#include "lcd.h"
+#include "tp.h"
+#include "stdint.h"
+#include "reversi8_2019.h"
+#include "cola_pantalla.h"
+
+const int X_INI_TAB = 150;
+const int Y_INI_TAB = 40;
+const int ANCHURA_TABLERO = 160;
+const int ALTURA_TABLERO = 160;
+const int ANCHURA_CELDA = 20;
+const int ALTURA_CELDA = 20;
+const int HORIZONTAL_MARGIN = 5;
+const int VERTICAL_MARGIN = 5;
+
+const int X_INI_INFO = 10;
+const int Y_INI_INFO = 15;
+
+const int ALTURA_FILA_INFO = 15;
+const int ANCHURA_FILA_INFO = 120;
+int desencolando = 0;
+
+void colocar_ficha(int color, int fila, int columna, int flush);
+void mostrar_tablero(int flush);
+void mostrar_leyenda_seleccion(int flush);
+void mostrar_texto_info(int fila, char * str, int flush);
+void realizar_trabajo_encolado(){
+
+	int f,c;
+	if(hay_trabajos_encolados()&&transferencia_completa){
+		int trabajo = obtener_trabajo();
+		desencolando = 1;
+		switch(trabajo){
+			case MOSTRAR_PANTALLA_INICIO:
+				mostrar_pantalla_inicial();
+				break;
+			case MOSTRAR_GANAN_BLANCAS:
+				mostrar_pantalla_final(FICHA_BLANCA);
+				break;
+			case MOSTRAR_GANAN_NEGRAS:
+				mostrar_pantalla_final(FICHA_NEGRA);
+				break;
+			case ACTUALIZAR_TABLERO:
+				actualizar_tablero_pantalla();
+				break;
+			case MOVER_FICHA_SELECCION_DERECHA:
+				mover_ficha_seleccion(fila_pantalla, columna_pantalla, fila_pantalla, columna_pantalla - 1);
+				break;
+			case MOVER_FICHA_SELECCION_ABAJO:
+				mover_ficha_seleccion(fila_pantalla, columna_pantalla, fila_pantalla - 1, columna_pantalla);
+				break;
+			case ACTUALIZAR_TIEMPO:
+				actualizar_tiempo(tiempo_partida, 1);
+				break;
+			case MOSTRAR_INFO:
+				mostrar_info(tiempo_partida, tiempo_patron_volteo, accesos_patron_volteo, fila_pantalla, columna_pantalla, 1);
+				break;
+			case MOSTRAR_PANTALLA_SELECCION:
+				mostrar_pantalla_seleccion();
+				break;
+			case MOSTRAR_PROFILING:
+				mostrar_profiling(tiempo_patron_volteo, accesos_patron_volteo,1);
+				break;
+		}
+		desencolando = 0;
+	}
+}
+
+void mostrar_pantalla_inicial(){
+	if(!transferencia_completa || (hay_trabajos_encolados() && ! desencolando)){
+		encolar_tabajo(MOSTRAR_PANTALLA_INICIO);
+	}else{
+
+		Lcd_Clr();
+		Lcd_DspAscII8x16(20, 45, BLACK,  "REVERSI");
+		Lcd_DspAscII8x16(20, 80, BLACK,  " - Hazte con más fichas que tu adversario 1");
+		Lcd_DspAscII8x16(20, 100, BLACK, " - Empiezas siendo negras");
+		Lcd_DspAscII8x16(20, 120, BLACK, " - Debes rodear fichas enemigas");
+		Lcd_DspAscII8x16(20, 220, BLACK, "Toca para jugar");
+		Lcd_Dma_Trans();
+	}
+}
+
+void reverse(char s[])
+{
+    int i, j;
+    char c;
+
+    for (i = 0, j = strlen(s)-1; i<j; i++, j--) {
+        c = s[i];
+        s[i] = s[j];
+        s[j] = c;
+    }
+}
+
+void itoa(int n, char s[])
+{
+    int i, sign;
+
+    if ((sign = n) < 0)  /* record sign */
+        n = -n;          /* make n positive */
+    i = 0;
+    do {       /* generate digits in reverse order */
+        s[i++] = n % 10 + '0';   /* get next digit */
+    } while ((n /= 10) > 0);     /* delete it */
+    if (sign < 0)
+        s[i++] = '-';
+    s[i] = '\0';
+    reverse(s);
+}
+
+
+
+void mostrar_pantalla_seleccion(){
+	if(!transferencia_completa || (hay_trabajos_encolados() && ! desencolando)){
+		encolar_tabajo(MOSTRAR_PANTALLA_SELECCION);
+	}else{
+		Lcd_Clr();
+		mostrar_tablero(0);
+		mostrar_info(0, 0, 0, 1, 1, 0);
+		mostrar_leyenda_seleccion(0);
+		colocar_ficha(BLACK, 4, 3, 0);
+		colocar_ficha(BLACK, 3, 4, 0);
+		colocar_ficha(WHITE, 3, 3, 0);
+		colocar_ficha(WHITE, 4, 4, 0);
+		Lcd_Dma_Trans();
+	}
+}
+
+void mostrar_pantalla_final(int color_ganador){
+	if(!transferencia_completa || (hay_trabajos_encolados() && ! desencolando)){
+		if(color_ganador == FICHA_BLANCA)
+			encolar_tabajo(MOSTRAR_GANAN_BLANCAS);
+		else
+			encolar_tabajo(MOSTRAR_GANAN_NEGRAS);
+	}else{
+		Lcd_Clr();
+		if(color_ganador == FICHA_BLANCA)
+			Lcd_DspAscII8x16(60, 70, BLACK, "GANAN LAS BLANCAS");
+		else
+			Lcd_DspAscII8x16(60, 70, BLACK, "GANAN LAS NEGRAS");
+		mostrar_leyenda_seleccion(0);
+		Lcd_Dma_Trans();
+	}
+}
+
+void screen_init(){
+	Lcd_Init();
+	Lcd_Active_Clr();
+	Lcd_Clr();
+	TS_init();
+	//Check_Sel();
+	mostrar_pantalla_inicial();
+}
+
+void mostrar_tablero(int flush){
+	if(transferencia_completa && (!hay_trabajos_encolados() || desencolando)){			//Función auxiliar.
+		int i = 0;
+		for(i = 0; i <= 8 ; i ++){
+
+			/*Pinta los indices del tablero*/
+			if(i < 8){
+				char str[2];
+				itoa(i + 1, str);
+				Lcd_DspAscII8x16(X_INI_TAB - ANCHURA_CELDA, (Y_INI_TAB + (ALTURA_CELDA * i)), BLACK, str );
+				Lcd_DspAscII8x16(X_INI_TAB + (ANCHURA_CELDA * i), (Y_INI_TAB - ALTURA_CELDA ), BLACK, str);
+			}
+			/*Pinta las lineas del tablero*/
+			int inicio_x_linea = X_INI_TAB + ANCHURA_CELDA * i;
+			Lcd_Draw_VLine(Y_INI_TAB,(Y_INI_TAB + ALTURA_TABLERO),
+					inicio_x_linea, BLACK, 1);
+
+			int inicio_y_linea = Y_INI_TAB + ALTURA_CELDA * i;
+			Lcd_Draw_HLine(X_INI_TAB,(X_INI_TAB + ANCHURA_TABLERO),
+					inicio_y_linea, BLACK, 1);
+
+		}
+		if(flush)Lcd_Dma_Trans();
+	}
+}
+
+void mostrar_info(uint8_t tiempo, uint8_t tiempo_patron_volteo,
+		uint8_t accesos_patron_volteo, uint8_t fila, uint8_t columna, int flush){
+	if(!transferencia_completa || (hay_trabajos_encolados() && ! desencolando)){
+		encolar_tabajo(MOSTRAR_INFO);
+	}else{
+		mostrar_texto_info(1, "Tiempo:", 0);
+		mostrar_texto_info(2, tiempo, 0);
+
+		char str[5];
+		itoa(tiempo_patron_volteo, str);
+
+		mostrar_texto_info(3, "Tiempo de", 0);
+		mostrar_texto_info(4, "p. volteo:", 0);
+		mostrar_texto_info(5, str, 0);
+
+		mostrar_texto_info(6, "Accesos a", 0);
+		mostrar_texto_info(7, "p. volteo:", 0);
+
+		itoa((accesos_patron_volteo + 0), str);
+		mostrar_texto_info(8, str, 0);
+
+		itoa(fila+1, str);
+		mostrar_texto_info(9, "Fila:", 0);
+		mostrar_texto_info(10, str, 0);
+
+		mostrar_texto_info(11, "Columna:", 0);
+		itoa(columna+1, str);
+		mostrar_texto_info(12,  str, 0);
+
+		if(flush)Lcd_Dma_Trans();
+	}
+}
+
+void mostrar_leyenda_seleccion(int flush){
+	if(transferencia_completa && (!hay_trabajos_encolados() || desencolando)){
+		Lcd_DspAscII8x16(80, 210, BLACK, "Pulsa para confirmar jugada:");
+		if(flush)Lcd_Dma_Trans();
+	}
+}
+
+void colocar_ficha(int color, int fila, int columna, int flush){
+	if(transferencia_completa && (!hay_trabajos_encolados() || desencolando)){		//Es una funcion auxiliar, no se la puede llamar si la transferencia no está completa(Ya se ha verificado).
+		int X_ini_celda = (X_INI_TAB + columna * (ANCHURA_CELDA)) + HORIZONTAL_MARGIN;
+		int Y_ini_celda = (Y_INI_TAB + fila * (ALTURA_CELDA)) + VERTICAL_MARGIN;
+
+		if(color == FICHA_BLANCA)color = WHITE;
+		else if (color == FICHA_NEGRA) color = BLACK;
+		int X_fin_celda = (X_INI_TAB + (columna + 1) * (ANCHURA_CELDA) - HORIZONTAL_MARGIN);
+		int Y_fin_celda = (Y_INI_TAB + (fila + 1) * (ALTURA_CELDA) - VERTICAL_MARGIN);
+
+		LcdClrRect(X_ini_celda, Y_ini_celda, X_fin_celda, Y_fin_celda, color);
+		Lcd_Draw_Box(X_ini_celda, Y_ini_celda, X_fin_celda, Y_fin_celda, BLACK);
+
+		if(flush)Lcd_Dma_Trans();
+	}
+}
+
+void borrar_ficha(int fila, int columna, int flush){
+	if(transferencia_completa){
+		int X_ini_celda = (X_INI_TAB + columna * (ANCHURA_CELDA)) + HORIZONTAL_MARGIN;
+		int Y_ini_celda = (Y_INI_TAB + fila * (ALTURA_CELDA)) + VERTICAL_MARGIN;
+
+		int X_fin_celda = (X_INI_TAB + (columna + 1) * (ANCHURA_CELDA) - HORIZONTAL_MARGIN);
+		int Y_fin_celda = (Y_INI_TAB + (fila + 1) * (ALTURA_CELDA) - VERTICAL_MARGIN);
+
+		LcdClrRect(X_ini_celda, Y_ini_celda, X_fin_celda, Y_fin_celda, WHITE);
+	}
+}
+
+void actualizar_tiempo(int tiempo_partida, int flush){
+	if(estado_jugada_pantalla == PANTALLA_SELECCION){
+		if(!transferencia_completa || (hay_trabajos_encolados() && ! desencolando)){
+			encolar_tabajo(ACTUALIZAR_TIEMPO);
+		}else{
+			char str[5];
+			itoa(tiempo_partida, str);
+			mostrar_texto_info(2,  str, 0);
+			if(flush){
+				Lcd_Dma_Trans();
+			}
+		}
+	}
+}
+
+void mostrar_profiling(int tiempo_patron_volteo, int accesos_patron_volteo, int flush){
+	if(!transferencia_completa || (hay_trabajos_encolados() && ! desencolando)){
+		encolar_tabajo(MOSTRAR_PROFILING);
+	}else{
+
+		char str[5];
+		itoa(tiempo_patron_volteo, str);
+		mostrar_texto_info(5,  str, 0);
+
+		itoa(accesos_patron_volteo, str);
+		mostrar_texto_info(8,  str, 0);
+		if(flush)Lcd_Dma_Trans();
+	}
+}
+
+void mover_ficha_seleccion(int fila, int columna, int fila_antigua, int columna_antigua){
+	if(estado_jugada_pantalla == PANTALLA_SELECCION){
+		if(!transferencia_completa || (hay_trabajos_encolados() && !desencolando)){
+			//if(fila > fila_antigua)
+				//encolar_tabajo(MOVER_FICHA_SELECCION_ABAJO);
+			//else
+				//encolar_tabajo(MOVER_FICHA_SELECCION_ABAJO);
+		}else{
+
+			char str[2];
+			itoa(fila + 1 , str);
+			mostrar_texto_info(10, str, 0);
+
+			itoa(columna + 1, str);
+			mostrar_texto_info(12, str, 0);
+			int i = 0;
+			int j = 0;
+			//borrar_ficha(fila_antigua,columna_antigua, 0);
+			for(i = 0 ; i < DIM; i++)
+				for(j = 0 ; j < DIM; j++)
+					if(!posicion_ocupada(i,j))
+						borrar_ficha(i,j, 0);
+			/*
+			if(fila > fila_antigua)
+				for(i = 0 ; i < DIM; i++)
+					if(!posicion_ocupada(i,columna))
+						borrar_ficha(i,columna, 0);
+			if(columna > columna_antigua)
+				for(i = 0 ; i < DIM; i++)
+					if(!posicion_ocupada(fila,i))
+						borrar_ficha(fila,i, 0);*/
+			colocar_ficha(LIGHTGRAY, fila, columna, 0);
+			Lcd_Dma_Trans();
+		}
+	}
+}
+
+void actualizar_tablero_pantalla(){
+	if(!transferencia_completa || (hay_trabajos_encolados() && ! desencolando)){
+		encolar_tabajo(ACTUALIZAR_TABLERO);
+	}else{
+		int i,j;
+		for(i = 0; i < DIM; i++){
+			for(j = 0;j < DIM; j++){
+
+				if(obtener_ficha_celda(i,j) == FICHA_BLANCA){
+					colocar_ficha(WHITE,i,j,0);
+				}else if(obtener_ficha_celda(i,j) == FICHA_NEGRA){
+					colocar_ficha(BLACK,i,j,0);
+				}else {
+					borrar_ficha(i,j,0);
+				}
+			}
+		}
+		Lcd_Dma_Trans();
+	}
+}
+
+void mostrar_texto_info(int fila, char * str, int flush){
+	if(transferencia_completa){
+		LcdClrRect(X_INI_INFO, Y_INI_INFO + (ALTURA_FILA_INFO * fila),
+				 X_INI_INFO + ANCHURA_FILA_INFO, Y_INI_INFO + (ALTURA_FILA_INFO * (fila + 1)) , WHITE);
+
+		Lcd_DspAscII8x16(X_INI_INFO, Y_INI_INFO + (ALTURA_FILA_INFO * fila), BLACK, str);
+		if(flush)Lcd_Dma_Trans();
+	}
+}

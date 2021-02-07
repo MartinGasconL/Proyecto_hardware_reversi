@@ -1,0 +1,39 @@
+/*********************************************************************************************
+* Fichero:	button.h
+* Autor:
+* Descrip:	Funciones de manejo de los pulsadores (EINT6-7)
+* Version:
+*********************************************************************************************/
+
+#ifndef _BUTTON_H_
+#define _BUTTON_H_
+
+/*--- declaracion de funciones visibles del módulo button.c/button.h ---*/
+int boton;
+
+typedef	enum
+		{
+		    BUTTON_NONE,
+		    BUTTON_IZ,
+		    BUTTON_DR,
+		    BUTTON_IZ_DR,
+		} Estado_button;
+
+
+
+
+enum {BIT_BT_IZ = 6, BIT_BT_DR = 7};
+volatile Estado_button estado_button;
+
+
+
+void Eint4567_init(void);
+void button_deshabilitar();
+void button_iniciar();
+void button_resetear();
+Estado_button button_estado();
+void button_ev_pulsacion(Estado_button boton);
+
+
+
+#endif /* _BUTTON_H_ */

@@ -1,0 +1,68 @@
+/*********************************************************************************************
+* Fichero:	controlador_excepciones.c
+* Autor: Eduardo Ruiz y Martin Gascon
+* Descrip:	Fichero fuente dedicado a la gestion de las excepciones
+* Version:  <P4-ARM.timer-leds>
+*********************************************************************************************/
+#include "44blib.h"
+#include "44b.h"
+#include "control_modo_procesador.h"
+
+int dir_instruccion;
+int dir_ins;
+void ERROR_ISR(){
+	//Obtenermos la palabra de estado, nos interesan los ultimos 5 bits que definen el
+	//estado del procesador
+
+
+	/*0x10000 16	User
+	  0x10001 17 	FIQ
+	  0x10010 18 	IRQ
+	  0x10011 19	SVC
+	  0x10111 23	Abort
+	  0x11011 27	Undefined
+	  0x11111 31	System (ARMv4+)*/
+
+
+	asm("ldr r2, =dir_ins\n\t"
+				"str lr, [r2]\n\t");
+	int estado = obtener_modo_procesador();
+
+	switch(estado){
+			case ABORT:
+				dir_ins = dir_ins - 8;
+				break;
+			case FIQ:
+			case IRQ:
+				dir_ins = dir_ins - 4;
+				break;
+		}
+
+	switch(estado){
+		case SVC:
+			D8Led_symbol(10);
+			break;
+		case ABORT:
+			D8Led_symbol(11);
+			break;
+		case UNDEF:
+			D8Led_symbol(12);
+			break;
+	}
+	while(1);
+
+}
+
+
+void init_excepciones(){
+	pISR_PABORT = (unsigned) ERROR_ISR;
+	pISR_DABORT = (unsigned) ERROR_ISR;
+	pISR_UNDEF = (unsigned) ERROR_ISR;
+	pISR_SWI = (unsigned) ERROR_ISR;
+}
+
+void test_excepciones(){
+	//generar_abort();
+	generar_swi();
+	asm volatile (".word 0xe7f000f0\n");	//GENERA UNA INTERRUPCION UNDEF (ejecutar una instruccion que no existe).
+}

@@ -1,0 +1,89 @@
+/*********************************************************************************************
+* Fichero:      timer2.c
+* Autor:
+* Descrip:      Timer que mide el tiempo transcurrido desde el inicio del juego en milisegundos.
+* Version:
+*********************************************************************************************/
+
+/*--- ficheros de cabecera ---*/
+#include "44b.h"
+#include "timer2.h"
+#include "control_modo_procesador.h"
+
+/*--- variables globales ---*/
+unsigned volatile int timer2_num_int;
+/*---- macros -------------*/
+#define TICKS_TO_MICRO(A) (A)<<5
+/*--- declaracion de funciones ---*/
+void timer2_ISR(void) __attribute__((interrupt("FIQ")));
+void timer2_inicializar(void);
+
+/*--- codigo de las funciones ---*/
+void timer2_ISR(void)
+{
+    timer2_num_int++; //incrementamos el numero de interrupciones
+
+
+    /* borrar bit en I_ISPC para desactivar la solicitud de interrupción*/
+
+    rI_ISPC |= BIT_TIMER2; // BIT_TIMER2 está definido en 44b.h y pone un uno en el bit que correponde al Timer2
+}
+
+void timer2_inicializar(void)
+{
+	/* Configuraion controlador de interrupciones */
+		    rINTMOD |=  (1 << 11); // Configura las linas como de tipo FIQ
+		    rINTMSK &= ~(BIT_TIMER2); // Emascara todas las lineas excepto Timer2
+
+		    /* Establece la rutina de servicio para TIMER2 */
+		    pISR_FIQ = (unsigned) timer2_ISR;
+
+			rTCFG0 &= 0xFFFF00FF;			//Prescalado a 0
+			rTCFG1 &= ~ 0x00000F00;			//	Para que sean el maximo de ciclos por interrupcion el divisor = 1/2
+
+			rTCNTB2 = 65535;				// 	Es un registro de 16 bits y debe ser lo maximo, luego 0xFFFF = 65535
+			rTCMPB2 = 0;					//	El valor minimo en el que se disparara la interrupcion
+
+			rTCON &= ~0xF000;				//Manual update y (13)
+			rTCON |= 1 << 13;
+			
+			rTCON &= ~0xF000;
+			rTCON |= 1 << 15;				// autoreload (15)
+			timer2_num_int = 0;
+}
+
+unsigned int ticks_to_microseconds(int ticks){
+	return ticks>>5;
+}
+
+unsigned int interruption_to_ticks(int interruptions){
+	return interruptions << 16;
+}
+
+unsigned int __attribute__((optimize("O0"))) timer2_leer(void){
+	unsigned int int_antes = timer2_num_int;
+	unsigned int int_despues = timer2_num_int;
+	unsigned int ticks = rTCNTB2 - rTCNTO2;
+	unsigned int total_ticks = interruption_to_ticks(int_despues);//Convierte las interrupciones a ticks.
+
+	total_ticks += ticks;						//Si estan en diferente ciclo, ambos valores serán iguales
+												//Sino nos quedamos con el último
+	return ticks_to_microseconds(total_ticks);	//Convierte ticks en microsegundos
+}
+
+void timer2_empezar(void){
+	timer2_num_int=0;
+		rTCNTB2 = 65535;// valor inicial de cuenta (la cuenta es descendente)
+		rTCMPB2 = 0;// valor de comparación
+		/* establecer update=manual (bit 14) */
+		rTCON &= ~0xF000;				//Manual update y (13)
+		rTCON |= 1 << 13;
+		/* iniciar timer (bit 13) con auto-reload (bit 16)*/
+		rTCON &= ~0xF000;				//Manual update y (13)
+		rTCON |=  0x9000;
+}
+
+unsigned int timer2_parar(void){
+	rTCON &= ~(1 << 12);
+	return timer2_leer();
+}

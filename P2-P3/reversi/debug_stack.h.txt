@@ -1,0 +1,37 @@
+/*
+ * debug_stack.h
+ *
+ *  Created on: 02/11/2019
+ *      Author: Martin
+ */
+
+#ifndef DEBUG_STACK_H_
+#define DEBUG_STACK_H_
+
+enum {
+
+	EVENTO_ENCENDER_LATIDO = 0xBB,
+	EVENTO_APAGAR_LATIDO = 0xCC,
+	EVENTO_IZ_BOTON_PULSADO = 0xAA,
+	EVENTO_IZ_BOTON_SOLTADO = 0xAB,
+	EVENTO_DR_BOTON_PULSADO = 0xDA,
+	EVENTO_DR_BOTON_SOLTADO = 0xDB,
+	EVENTO_TICK_TIMER1 = 0xFF,
+	EVENTO_JUGADA = 0xEE,
+	EVENTO_PULSACION_TACTIL = 0x11,
+	EVENTO_GANAN_BLANCAS = 0x22,
+	EVENTO_GANAN_NEGRAS = 0x33,
+	EVENTO_FINLCD = 0x44,
+	EVENTO_SEGUNDO = 0x55
+};
+
+
+
+#endif /* DEBUG_STACK_H_ */
+void push_debug(int ID_evento, int aux_data);
+
+int hayEventos();
+
+int tratar_evento();
+int concatenar_parametros(int a, int b);
+void init_stack();

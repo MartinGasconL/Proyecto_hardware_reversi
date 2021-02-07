@@ -1,0 +1,25 @@
+/*
+ * jugada_por_botones.h
+ *
+ *  Created on: 05/11/2019
+ *      Author: a764429
+ */
+
+#ifndef JUGADA_POR_BOTONES_H_
+#define JUGADA_POR_BOTONES_H_
+typedef enum {
+	INICIO_FILA,
+	SELECCIONAR_FILA,
+	INICIO_COLUMNA,
+	SELECCIONAR_COLUMNA,
+	JUGAR
+
+
+} Estados_jugada_botones;
+Estados_jugada_botones estado_jugada_botones;
+
+int fila_botones;
+int columna_botones;
+void evento_botones_producido(int evento);
+void obtener_ficha_botones(int *f, int *c);
+#endif /* JUGADA_POR_BOTONES_H_ */

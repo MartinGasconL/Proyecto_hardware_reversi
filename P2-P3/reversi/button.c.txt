@@ -1,0 +1,103 @@
+/*********************************************************************************************
+* Fichero:	button.c
+* Autor:
+* Descrip:	Funciones de manejo de los pulsadores (EINT6-7)
+* Version:
+*********************************************************************************************/
+
+/*--- ficheros de cabecera ---*/
+#include "44blib.h"
+#include "44b.h"
+#include "def.h"
+#include "boton_antirebotes.h"
+#include "button.h"
+#include "stdint.h"
+
+/*--- variables globales del módulo ---*/
+/* int_count la utilizamos para sacar un número por el 8led.
+  Cuando se pulsa un botón sumamos y con el otro restamos. ¡A veces hay rebotes! */
+
+/* declaración de función que es rutina de servicio de interrupción
+ * https://gcc.gnu.org/onlinedocs/gcc/ARM-Function-Attributes.html */
+void Eint4567_ISR(void) __attribute__((interrupt("IRQ")));
+
+
+/*--- codigo de funciones ---*/
+void Eint4567_ISR(void){
+	/*CALIBRACION
+
+	if(rEXTINTPND == 4)
+		push_debug(0xDD,1);
+	else
+		push_debug(0xAA,1);*/
+
+
+	/*FUNCIONAMIENTO NORMAL*/
+	button_ev_pulsacion(button_estado());
+	push_debug(0x77,1);
+	button_deshabilitar();
+
+	/* Finalizar ISR */
+	rEXTINTPND = 0xf;				// borra los bits en EXTINTPND
+	rI_ISPC   |= BIT_EINT4567;		// borra el bit pendiente en INTPND
+}
+
+void button_iniciar(void){
+	estado_timer_button = INICIAL;
+
+	/* Configuracion del controlador de interrupciones. Estos registros están definidos en 44b.h */
+	rI_ISPC    = 0x3ffffff;	// Borra INTPND escribiendo 1s en I_ISPC
+	rEXTINTPND = 0xf;       // Borra EXTINTPND escribiendo 1s en el propio registro
+	rINTMSK    &= ~(BIT_EINT4567); // habilitamos interrupcion linea eint4567 en vector de mascaras
+
+	/* Establece la rutina de servicio para Eint4567 */
+	pISR_EINT4567 = (int) Eint4567_ISR;
+
+	/* Configuracion del puerto G */
+	rPCONG  = 0xffff;        		// Establece la funcion de los pines (EINT0-7)
+	rPUPG   = 0x0;                  // Habilita el "pull up" del puerto
+	rEXTINT = rEXTINT | 0x22220000;   // Configura las lineas de int. como de flanco de bajada
+
+	/* Por precaucion, se vuelven a borrar los bits de INTPND y EXTINTPND */
+	rEXTINTPND = 0xf;				// borra los bits en EXTINTPND
+	rI_ISPC   |= BIT_EINT4567;		// borra el bit pendiente en INTPND
+}
+
+/* deshabilita las interrupciones del boton */
+void button_deshabilitar(void){
+	rINTMSK |= BIT_EINT4567;
+}
+
+void button_resetear(){
+	rEXTINTPND = 0xf;
+	rINTMSK &= ~(BIT_EINT4567);
+}
+
+void button_ev_pulsacion(Estado_button boton){
+	timer1_inicializar();
+	timer1_empezar();
+}
+
+Estado_button button_estado(){
+
+	uint8_t bits_botones = (~ rPDATG) >> 6;		//me quedo con los dos msb del registro PDATG
+
+
+	uint8_t bt_iz_pulsado = bits_botones &  0x1;
+	uint8_t bt_dr_pulsado = bits_botones &  0x2;
+
+	if (bt_iz_pulsado && bt_dr_pulsado)					// ambos botones pulsados
+		return BUTTON_IZ_DR;
+
+	if (bt_dr_pulsado)						// solo se pulsa el boton izquierdo
+		return BUTTON_DR;
+
+	if (bt_iz_pulsado)						// solo se pulsa el boton derecho
+		return BUTTON_IZ;
+
+	return BUTTON_NONE;						// no se ha presionado ningun boton
+}
+
+
+
+

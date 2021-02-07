@@ -1,0 +1,24 @@
+/*
+ * jugada_por_pantalla.h
+ *
+ *  Created on: 03/12/2019
+ *      Author: a764429
+ */
+
+#ifndef JUGADA_POR_PANTALLA_H_
+#define JUGADA_POR_PANTALLA_H_
+typedef enum {
+	PANTALLA_INICIAL,
+	PANTALLA_SELECCION,
+	PANTALLA_FIN
+
+} Estado_pantalla;
+Estado_pantalla estado_jugada_pantalla;
+
+int fila_pantalla;
+int columna_pantalla;
+
+void evento_pantalla_producido(int evento);
+
+void obtener_ficha_pantalla(int *f, int *c);
+#endif /* JUGADA_POR_PANTALLA_H_ */

@@ -1,0 +1,203 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 6
+  10              		.eabi_attribute 18, 4
+  11              		.file	"controlador_latido.c"
+  21              	.Ltext0:
+  22              		.file 1 "../controlador_latido.c"
+ 987              		.align	2
+ 990              	contador_eventos:
+ 991 0000 00000000 		.space	4
+ 992              		.global	estado_led
+ 993              		.align	2
+ 996              	estado_led:
+ 997 0004 00000000 		.space	4
+ 998              		.text
+ 999              		.align	2
+ 1000              		.global	Latido_ev_new_tick
+ 1002              	Latido_ev_new_tick:
+ 1003              	.LFB0:
+   1:../controlador_latido.c **** /*********************************************************************************************
+   2:../controlador_latido.c **** * Fichero:	controlador_latido.c
+   3:../controlador_latido.c **** * Autor: Eduardo Ruiz y Martin Gascon
+   4:../controlador_latido.c **** * Descrip:	Fichero fuente dedicado a la gestion del led de latido, parpadea a 4 hz
+   5:../controlador_latido.c **** * Version:  <P4-ARM.timer-leds>
+   6:../controlador_latido.c **** *********************************************************************************************/
+   7:../controlador_latido.c **** #include "controlador_latido.h"
+   8:../controlador_latido.c **** #include "led.h"
+   9:../controlador_latido.c **** #include "debug_stack.h"
+  10:../controlador_latido.c **** int contador_eventos = 0;
+  11:../controlador_latido.c **** int estado_led = APAGADO;
+  12:../controlador_latido.c **** 
+  13:../controlador_latido.c **** 
+  14:../controlador_latido.c **** //Reduce la frecuencia del reloj a una frecuencia de evento de latido de 4 hz
+  15:../controlador_latido.c **** void Latido_ev_new_tick(){
+ 1004              		.loc 1 15 0
+ 1005              		.cfi_startproc
+ 1006              		@ Function supports interworking.
+ 1007              		@ args = 0, pretend = 0, frame = 0
+ 1008              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1009 0000 0DC0A0E1 		mov	ip, sp
+ 1010              	.LCFI0:
+ 1011              		.cfi_def_cfa_register 12
+ 1012 0004 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1013 0008 04B04CE2 		sub	fp, ip, #4
+ 1014              		.cfi_offset 14, -8
+ 1015              		.cfi_offset 13, -12
+ 1016              		.cfi_offset 11, -16
+ 1017              	.LCFI1:
+ 1018              		.cfi_def_cfa 11, 4
+  16:../controlador_latido.c **** 
+  17:../controlador_latido.c **** 	if(contador_eventos == 7 && estado_led == APAGADO){
+ 1019              		.loc 1 17 0
+ 1020 000c A4309FE5 		ldr	r3, .L4
+ 1021 0010 003093E5 		ldr	r3, [r3, #0]
+ 1022 0014 070053E3 		cmp	r3, #7
+ 1023 0018 0D00001A 		bne	.L2
+ 1024              		.loc 1 17 0 is_stmt 0 discriminator 1
+ 1025 001c 98309FE5 		ldr	r3, .L4+4
+ 1026 0020 003093E5 		ldr	r3, [r3, #0]
+ 1027 0024 000053E3 		cmp	r3, #0
+ 1028 0028 0900001A 		bne	.L2
+  18:../controlador_latido.c **** 		push_debug(EVENTO_ENCENDER_LATIDO,0);
+ 1029              		.loc 1 18 0 is_stmt 1
+ 1030 002c BB00A0E3 		mov	r0, #187
+ 1031 0030 0010A0E3 		mov	r1, #0
+ 1032 0034 FEFFFFEB 		bl	push_debug
+  19:../controlador_latido.c **** 		contador_eventos = 0;
+ 1033              		.loc 1 19 0
+ 1034 0038 78309FE5 		ldr	r3, .L4
+ 1035 003c 0020A0E3 		mov	r2, #0
+ 1036 0040 002083E5 		str	r2, [r3, #0]
+  20:../controlador_latido.c **** 		estado_led = ENCENDIDO;
+ 1037              		.loc 1 20 0
+ 1038 0044 70309FE5 		ldr	r3, .L4+4
+ 1039 0048 0120A0E3 		mov	r2, #1
+ 1040 004c 002083E5 		str	r2, [r3, #0]
+ 1041 0050 100000EA 		b	.L3
+ 1042              	.L2:
+  21:../controlador_latido.c **** 
+  22:../controlador_latido.c **** 	}else if(contador_eventos == 8 && estado_led == ENCENDIDO){
+ 1043              		.loc 1 22 0
+ 1044 0054 5C309FE5 		ldr	r3, .L4
+ 1045 0058 003093E5 		ldr	r3, [r3, #0]
+ 1046 005c 080053E3 		cmp	r3, #8
+ 1047 0060 0C00001A 		bne	.L3
+ 1048              		.loc 1 22 0 is_stmt 0 discriminator 1
+ 1049 0064 50309FE5 		ldr	r3, .L4+4
+ 1050 0068 003093E5 		ldr	r3, [r3, #0]
+ 1051 006c 010053E3 		cmp	r3, #1
+ 1052 0070 0800001A 		bne	.L3
+  23:../controlador_latido.c **** 		push_debug(EVENTO_APAGAR_LATIDO,0);
+ 1053              		.loc 1 23 0 is_stmt 1
+ 1054 0074 CC00A0E3 		mov	r0, #204
+ 1055 0078 0010A0E3 		mov	r1, #0
+ 1056 007c FEFFFFEB 		bl	push_debug
+  24:../controlador_latido.c **** 		contador_eventos = 0;
+ 1057              		.loc 1 24 0
+ 1058 0080 30309FE5 		ldr	r3, .L4
+ 1059 0084 0020A0E3 		mov	r2, #0
+ 1060 0088 002083E5 		str	r2, [r3, #0]
+  25:../controlador_latido.c **** 		estado_led = APAGADO;
+ 1061              		.loc 1 25 0
+ 1062 008c 28309FE5 		ldr	r3, .L4+4
+ 1063 0090 0020A0E3 		mov	r2, #0
+ 1064 0094 002083E5 		str	r2, [r3, #0]
+ 1065              	.L3:
+  26:../controlador_latido.c **** 
+  27:../controlador_latido.c **** 	}
+  28:../controlador_latido.c **** 	contador_eventos++;
+ 1066              		.loc 1 28 0
+ 1067 0098 18309FE5 		ldr	r3, .L4
+ 1068 009c 003093E5 		ldr	r3, [r3, #0]
+ 1069 00a0 012083E2 		add	r2, r3, #1
+ 1070 00a4 0C309FE5 		ldr	r3, .L4
+ 1071 00a8 002083E5 		str	r2, [r3, #0]
+  29:../controlador_latido.c **** }
+ 1072              		.loc 1 29 0
+ 1073 00ac 0CD04BE2 		sub	sp, fp, #12
+ 1074 00b0 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 1075 00b4 1EFF2FE1 		bx	lr
+ 1076              	.L5:
+ 1077              		.align	2
+ 1078              	.L4:
+ 1079 00b8 00000000 		.word	contador_eventos
+ 1080 00bc 00000000 		.word	estado_led
+ 1081              		.cfi_endproc
+ 1082              	.LFE0:
+ 1084              		.align	2
+ 1085              		.global	latido_encender
+ 1087              	latido_encender:
+ 1088              	.LFB1:
+  30:../controlador_latido.c **** //Enciende y apaga el led
+  31:../controlador_latido.c **** void latido_encender(int evento){
+ 1089              		.loc 1 31 0
+ 1090              		.cfi_startproc
+ 1091              		@ Function supports interworking.
+ 1092              		@ args = 0, pretend = 0, frame = 8
+ 1093              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1094 00c0 0DC0A0E1 		mov	ip, sp
+ 1095              	.LCFI2:
+ 1096              		.cfi_def_cfa_register 12
+ 1097 00c4 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1098 00c8 04B04CE2 		sub	fp, ip, #4
+ 1099              		.cfi_offset 14, -8
+ 1100              		.cfi_offset 13, -12
+ 1101              		.cfi_offset 11, -16
+ 1102              	.LCFI3:
+ 1103              		.cfi_def_cfa 11, 4
+ 1104 00cc 08D04DE2 		sub	sp, sp, #8
+ 1105 00d0 10000BE5 		str	r0, [fp, #-16]
+  32:../controlador_latido.c **** 	if(evento == EVENTO_ENCENDER_LATIDO){
+ 1106              		.loc 1 32 0
+ 1107 00d4 10301BE5 		ldr	r3, [fp, #-16]
+ 1108 00d8 BB0053E3 		cmp	r3, #187
+ 1109 00dc 0100001A 		bne	.L7
+  33:../controlador_latido.c **** 
+  34:../controlador_latido.c **** 		led1_on();
+ 1110              		.loc 1 34 0
+ 1111 00e0 FEFFFFEB 		bl	led1_on
+ 1112 00e4 030000EA 		b	.L6
+ 1113              	.L7:
+  35:../controlador_latido.c **** 	}else if(evento == EVENTO_APAGAR_LATIDO){
+ 1114              		.loc 1 35 0
+ 1115 00e8 10301BE5 		ldr	r3, [fp, #-16]
+ 1116 00ec CC0053E3 		cmp	r3, #204
+ 1117 00f0 0000001A 		bne	.L6
+  36:../controlador_latido.c **** 
+  37:../controlador_latido.c **** 		led1_off();
+ 1118              		.loc 1 37 0
+ 1119 00f4 FEFFFFEB 		bl	led1_off
+ 1120              	.L6:
+  38:../controlador_latido.c **** 	}
+  39:../controlador_latido.c **** 
+  40:../controlador_latido.c **** }
+ 1121              		.loc 1 40 0
+ 1122 00f8 0CD04BE2 		sub	sp, fp, #12
+ 1123 00fc 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 1124 0100 1EFF2FE1 		bx	lr
+ 1125              		.cfi_endproc
+ 1126              	.LFE1:
+ 1128              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 controlador_latido.c
+C:\Users\Martin\AppData\Local\Temp\ccNhAZjQ.s:990    .bss:00000000 contador_eventos
+C:\Users\Martin\AppData\Local\Temp\ccNhAZjQ.s:987    .bss:00000000 $d
+C:\Users\Martin\AppData\Local\Temp\ccNhAZjQ.s:996    .bss:00000004 estado_led
+C:\Users\Martin\AppData\Local\Temp\ccNhAZjQ.s:999    .text:00000000 $a
+C:\Users\Martin\AppData\Local\Temp\ccNhAZjQ.s:1002   .text:00000000 Latido_ev_new_tick
+C:\Users\Martin\AppData\Local\Temp\ccNhAZjQ.s:1079   .text:000000b8 $d
+C:\Users\Martin\AppData\Local\Temp\ccNhAZjQ.s:1084   .text:000000c0 $a
+C:\Users\Martin\AppData\Local\Temp\ccNhAZjQ.s:1087   .text:000000c0 latido_encender
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+push_debug
+led1_on
+led1_off

@@ -1,0 +1,162 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 6
+  10              		.eabi_attribute 18, 4
+  11              		.file	"control_modo_procesador.c"
+  21              	.Ltext0:
+  22              		.file 1 "../control_modo_procesador.c"
+ 1837              		.align	2
+ 1838              		.global	obtener_modo_procesador
+ 1840              	obtener_modo_procesador:
+ 1841              	.LFB0:
+   1:../control_modo_procesador.c **** /*********************************************************************************************
+   2:../control_modo_procesador.c **** * Fichero:	main.c
+   3:../control_modo_procesador.c **** * Autor: Eduardo Ruiz y Martin Gascon
+   4:../control_modo_procesador.c **** * Descrip:	Fichero fuente dedicado a la gestion del modo del procesador
+   5:../control_modo_procesador.c **** * Version:  <P4-ARM.timer-leds>
+   6:../control_modo_procesador.c **** *********************************************************************************************/
+   7:../control_modo_procesador.c **** #include "control_modo_procesador.h"
+   8:../control_modo_procesador.c **** #include "44b.h"
+   9:../control_modo_procesador.c **** int estado;
+  10:../control_modo_procesador.c **** int dir;
+  11:../control_modo_procesador.c **** 
+  12:../control_modo_procesador.c **** 
+  13:../control_modo_procesador.c **** 
+  14:../control_modo_procesador.c **** int obtener_modo_procesador(){
+ 1842              		.loc 1 14 0
+ 1843              		.cfi_startproc
+ 1844              		@ Function supports interworking.
+ 1845              		@ args = 0, pretend = 0, frame = 0
+ 1846              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1847 0000 0DC0A0E1 		mov	ip, sp
+ 1848              	.LCFI0:
+ 1849              		.cfi_def_cfa_register 12
+ 1850 0004 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1851 0008 04B04CE2 		sub	fp, ip, #4
+ 1852              		.cfi_offset 14, -8
+ 1853              		.cfi_offset 13, -12
+ 1854              		.cfi_offset 11, -16
+ 1855              	.LCFI1:
+ 1856              		.cfi_def_cfa 11, 4
+  15:../control_modo_procesador.c **** 
+  16:../control_modo_procesador.c **** 	asm("ldr r0, =estado\n\t"
+ 1857              		.loc 1 16 0
+ 1858              	@ 16 "../control_modo_procesador.c" 1
+ 1859 000c 80009FE5 		ldr r0, =estado
+ 1860 0010 00100FE1 		MRS r1, CPSR
+ 1861 0014 001080E5 		str r1,[r0]
+ 1862 0018 78209FE5 		ldr r2, =dir
+ 1863 001c 00E082E5 		str lr, [r2]
+ 1864              		
+ 1865              	@ 0 "" 2
+  17:../control_modo_procesador.c **** 			"MRS r1, CPSR\n\t"
+  18:../control_modo_procesador.c **** 			"str r1,[r0]\n\t"
+  19:../control_modo_procesador.c **** 			"ldr r2, =dir\n\t"
+  20:../control_modo_procesador.c **** 			"str lr, [r2]\n\t");
+  21:../control_modo_procesador.c **** 
+  22:../control_modo_procesador.c **** 	//aplicamos una mascara para borrar los bits 5 a 31
+  23:../control_modo_procesador.c **** 	estado &= 0x0000001F;
+ 1866              		.loc 1 23 0
+ 1867 0020 24309FE5 		ldr	r3, .L2
+ 1868 0024 003093E5 		ldr	r3, [r3, #0]
+ 1869 0028 1F2003E2 		and	r2, r3, #31
+ 1870 002c 18309FE5 		ldr	r3, .L2
+ 1871 0030 002083E5 		str	r2, [r3, #0]
+  24:../control_modo_procesador.c **** 	return estado;
+ 1872              		.loc 1 24 0
+ 1873 0034 10309FE5 		ldr	r3, .L2
+ 1874 0038 003093E5 		ldr	r3, [r3, #0]
+  25:../control_modo_procesador.c **** }
+ 1875              		.loc 1 25 0
+ 1876 003c 0300A0E1 		mov	r0, r3
+ 1877 0040 0CD04BE2 		sub	sp, fp, #12
+ 1878 0044 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 1879 0048 1EFF2FE1 		bx	lr
+ 1880              	.L3:
+ 1881              		.align	2
+ 1882              	.L2:
+ 1883 004c 00000000 		.word	estado
+ 1884              		.cfi_endproc
+ 1885              	.LFE0:
+ 1887              		.align	2
+ 1888              		.global	cambiar_modo_usuario
+ 1890              	cambiar_modo_usuario:
+ 1891              	.LFB1:
+  26:../control_modo_procesador.c **** 
+  27:../control_modo_procesador.c **** void __attribute__((optimize("O0"))) cambiar_modo_usuario(){
+ 1892              		.loc 1 27 0
+ 1893              		.cfi_startproc
+ 1894              		@ Function supports interworking.
+ 1895              		@ args = 0, pretend = 0, frame = 8
+ 1896              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1897 0050 0DC0A0E1 		mov	ip, sp
+ 1898              	.LCFI2:
+ 1899              		.cfi_def_cfa_register 12
+ 1900 0054 10D82DE9 		stmfd	sp!, {r4, fp, ip, lr, pc}
+ 1901 0058 04B04CE2 		sub	fp, ip, #4
+ 1902              		.cfi_offset 14, -8
+ 1903              		.cfi_offset 13, -12
+ 1904              		.cfi_offset 11, -16
+ 1905              		.cfi_offset 4, -20
+ 1906              	.LCFI3:
+ 1907              		.cfi_def_cfa 11, 4
+ 1908 005c 0CD04DE2 		sub	sp, sp, #12
+  28:../control_modo_procesador.c **** 	char *userStack = (char *)_ISR_STARTADDRESS - 0xf00;
+ 1909              		.loc 1 28 0
+ 1910 0060 28309FE5 		ldr	r3, .L5
+ 1911 0064 18300BE5 		str	r3, [fp, #-24]
+  29:../control_modo_procesador.c **** 	__asm__ volatile("mrs r0, cpsr");
+ 1912              		.loc 1 29 0
+ 1913              	@ 29 "../control_modo_procesador.c" 1
+ 1914 0068 00000FE1 		mrs r0, cpsr
+ 1915              	@ 0 "" 2
+  30:../control_modo_procesador.c **** 	__asm__ volatile("msr spsr, r0");
+ 1916              		.loc 1 30 0
+ 1917              	@ 30 "../control_modo_procesador.c" 1
+ 1918 006c 00F069E1 		msr spsr, r0
+ 1919              	@ 0 "" 2
+  31:../control_modo_procesador.c **** 	__asm__ volatile("msr CPSR_c, 0x10");
+ 1920              		.loc 1 31 0
+ 1921              	@ 31 "../control_modo_procesador.c" 1
+ 1922 0070 10F021E3 		msr CPSR_c, 0x10
+ 1923              	@ 0 "" 2
+  32:../control_modo_procesador.c **** 	__asm__ volatile("mov sp, %0"
+ 1924              		.loc 1 32 0
+ 1925 0074 18301BE5 		ldr	r3, [fp, #-24]
+ 1926 0078 0340A0E1 		mov	r4, r3
+ 1927              	@ 32 "../control_modo_procesador.c" 1
+ 1928 007c 04D0A0E1 		mov sp, r4
+ 1929              	@ 0 "" 2
+ 1930 0080 18400BE5 		str	r4, [fp, #-24]
+  33:../control_modo_procesador.c **** 					 : "+r"(userStack));
+  34:../control_modo_procesador.c **** }
+ 1931              		.loc 1 34 0
+ 1932 0084 10D04BE2 		sub	sp, fp, #16
+ 1933 0088 10689DE8 		ldmfd	sp, {r4, fp, sp, lr}
+ 1934 008c 1EFF2FE1 		bx	lr
+ 1935              	.L6:
+ 1936              		.align	2
+ 1937              	.L5:
+ 1938 0090 00F07F0C 		.word	209711104
+ 1939              		.cfi_endproc
+ 1940              	.LFE1:
+ 1942              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 control_modo_procesador.c
+                            *COM*:00000004 estado
+                            *COM*:00000004 dir
+C:\Users\Martin\AppData\Local\Temp\ccRxSYYh.s:1837   .text:00000000 $a
+C:\Users\Martin\AppData\Local\Temp\ccRxSYYh.s:1840   .text:00000000 obtener_modo_procesador
+C:\Users\Martin\AppData\Local\Temp\ccRxSYYh.s:1883   .text:0000004c $d
+C:\Users\Martin\AppData\Local\Temp\ccRxSYYh.s:1887   .text:00000050 $a
+C:\Users\Martin\AppData\Local\Temp\ccRxSYYh.s:1890   .text:00000050 cambiar_modo_usuario
+C:\Users\Martin\AppData\Local\Temp\ccRxSYYh.s:1938   .text:00000090 $d
+                     .debug_frame:00000010 $d
+
+NO UNDEFINED SYMBOLS

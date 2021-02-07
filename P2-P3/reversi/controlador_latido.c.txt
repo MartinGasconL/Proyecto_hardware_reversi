@@ -1,0 +1,40 @@
+/*********************************************************************************************
+* Fichero:	controlador_latido.c
+* Autor: Eduardo Ruiz y Martin Gascon
+* Descrip:	Fichero fuente dedicado a la gestion del led de latido, parpadea a 4 hz
+* Version:  <P4-ARM.timer-leds>
+*********************************************************************************************/
+#include "controlador_latido.h"
+#include "led.h"
+#include "debug_stack.h"
+int contador_eventos = 0;
+int estado_led = APAGADO;
+
+
+//Reduce la frecuencia del reloj a una frecuencia de evento de latido de 4 hz
+void Latido_ev_new_tick(){
+
+	if(contador_eventos == 7 && estado_led == APAGADO){
+		push_debug(EVENTO_ENCENDER_LATIDO,0);
+		contador_eventos = 0;
+		estado_led = ENCENDIDO;
+
+	}else if(contador_eventos == 8 && estado_led == ENCENDIDO){
+		push_debug(EVENTO_APAGAR_LATIDO,0);
+		contador_eventos = 0;
+		estado_led = APAGADO;
+
+	}
+	contador_eventos++;
+}
+//Enciende y apaga el led
+void latido_encender(int evento){
+	if(evento == EVENTO_ENCENDER_LATIDO){
+
+		led1_on();
+	}else if(evento == EVENTO_APAGAR_LATIDO){
+
+		led1_off();
+	}
+
+}

@@ -1,0 +1,3 @@
+enum {APAGADO = 0, ENCENDIDO = 1};
+void Latido_ev_new_tick();
+void latido_encender(int evento);

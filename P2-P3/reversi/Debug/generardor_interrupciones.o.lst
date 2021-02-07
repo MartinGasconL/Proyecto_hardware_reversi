@@ -1,0 +1,22 @@
+   1              	# 1 "../generardor_interrupciones.asm"
+   1              	.global generar_abort
+   0              	
+   0              	
+   0              	
+   2              	.extern HandlerDabort
+   3              	.global generar_swi
+   4              	
+   5              	.arm
+   6              	generar_abort:
+   7 0000 04002DE5 		PUSH {r0}
+   8 0004 0300A0E3 		ldr r0,=0x00000003
+   9 0008 000080E5 		str r0,[r0]
+  10              	generar_swi:
+  11 000c 000000EF 		SWI 0
+DEFINED SYMBOLS
+../generardor_interrupciones.asm:6      .text:00000000 generar_abort
+../generardor_interrupciones.asm:10     .text:0000000c generar_swi
+../generardor_interrupciones.asm:7      .text:00000000 $a
+                   .debug_aranges:0000000c $d
+
+NO UNDEFINED SYMBOLS

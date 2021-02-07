@@ -1,0 +1,42 @@
+/*********************************************************************************************
+* Fichero:	main.c
+* Autor: Eduardo Ruiz y Martin Gascon
+* Descrip:	Fichero fuente dedicado a la gestion del modo del procesador
+* Version:  <P4-ARM.timer-leds>
+*********************************************************************************************/
+#include "control_modo_procesador.h"
+#include "44b.h"
+int estado;
+int dir;
+
+
+
+int obtener_modo_procesador(){
+
+	asm("ldr r0, =estado\n\t"
+			"MRS r1, CPSR\n\t"
+			"str r1,[r0]\n\t"
+			"ldr r2, =dir\n\t"
+			"str lr, [r2]\n\t");
+
+	//aplicamos una mascara para borrar los bits 5 a 31
+	estado &= 0x0000001F;
+	return estado;
+}
+
+void __attribute__((optimize("O0"))) cambiar_modo_usuario(){
+	char *userStack = (char *)_ISR_STARTADDRESS - 0xf00;
+	/* __asm__ volatile("mrs r0, cpsr");
+	__asm__ volatile("msr spsr, r0");
+	__asm__ volatile("msr CPSR_c, 0x10");
+	__asm__ volatile("mov sp, %0"
+					 : "+r"(userStack));*/
+
+	__asm__ volatile("mrs r0, cpsr");		//Cargamos en r0 el registro de estado
+	__asm__ volatile("bic r0, r0, #0x1f");	//limpiamois los bits de control (5 lsb)
+	__asm__ volatile("orr r1, r0, #0x10");	//ponemos los bits en modo usuario 0x10
+	__asm__ volatile("msr CPSR_c, r1");		//escribimos en el registro de estado los bits de control
+	__asm__ volatile("mov sp, %0"
+					 : "+r"(userStack));
+}
+

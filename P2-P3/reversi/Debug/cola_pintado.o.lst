@@ -1,0 +1,316 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 6
+  10              		.eabi_attribute 18, 4
+  11              		.file	"cola_pintado.c"
+  21              	.Ltext0:
+  22              		.file 1 "../cola_pintado.c"
+ 1220              		.align	2
+ 1221              		.global	encolar_tabajo
+ 1223              	encolar_tabajo:
+ 1224              	.LFB0:
+   1:../cola_pintado.c **** 
+   2:../cola_pintado.c **** #include "cola_pantalla.h"
+   3:../cola_pintado.c **** 
+   4:../cola_pintado.c **** #define TAMANO_MAX 10
+   5:../cola_pintado.c **** 
+   6:../cola_pintado.c **** 
+   7:../cola_pintado.c **** int indice_prod;
+   8:../cola_pintado.c **** int indice_cons;
+   9:../cola_pintado.c **** int trabajos[TAMANO_MAX];
+  10:../cola_pintado.c **** 
+  11:../cola_pintado.c **** void encolar_tabajo(int id_trabajo){
+ 1225              		.loc 1 11 0
+ 1226              		.cfi_startproc
+ 1227              		@ Function supports interworking.
+ 1228              		@ args = 0, pretend = 0, frame = 8
+ 1229              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1230 0000 0DC0A0E1 		mov	ip, sp
+ 1231              	.LCFI0:
+ 1232              		.cfi_def_cfa_register 12
+ 1233 0004 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1234 0008 04B04CE2 		sub	fp, ip, #4
+ 1235              		.cfi_offset 14, -8
+ 1236              		.cfi_offset 13, -12
+ 1237              		.cfi_offset 11, -16
+ 1238              	.LCFI1:
+ 1239              		.cfi_def_cfa 11, 4
+ 1240 000c 08D04DE2 		sub	sp, sp, #8
+ 1241 0010 10000BE5 		str	r0, [fp, #-16]
+  12:../cola_pintado.c ****     trabajos[indice_prod] = id_trabajo;
+ 1242              		.loc 1 12 0
+ 1243 0014 48309FE5 		ldr	r3, .L3
+ 1244 0018 002093E5 		ldr	r2, [r3, #0]
+ 1245 001c 44309FE5 		ldr	r3, .L3+4
+ 1246 0020 10101BE5 		ldr	r1, [fp, #-16]
+ 1247 0024 021183E7 		str	r1, [r3, r2, asl #2]
+  13:../cola_pintado.c ****     indice_prod ++;
+ 1248              		.loc 1 13 0
+ 1249 0028 34309FE5 		ldr	r3, .L3
+ 1250 002c 003093E5 		ldr	r3, [r3, #0]
+ 1251 0030 012083E2 		add	r2, r3, #1
+ 1252 0034 28309FE5 		ldr	r3, .L3
+ 1253 0038 002083E5 		str	r2, [r3, #0]
+  14:../cola_pintado.c ****     if(indice_prod == TAMANO_MAX){
+ 1254              		.loc 1 14 0
+ 1255 003c 20309FE5 		ldr	r3, .L3
+ 1256 0040 003093E5 		ldr	r3, [r3, #0]
+ 1257 0044 0A0053E3 		cmp	r3, #10
+ 1258 0048 0200001A 		bne	.L1
+  15:../cola_pintado.c ****         indice_prod = 0;
+ 1259              		.loc 1 15 0
+ 1260 004c 10309FE5 		ldr	r3, .L3
+ 1261 0050 0020A0E3 		mov	r2, #0
+ 1262 0054 002083E5 		str	r2, [r3, #0]
+ 1263              	.L1:
+  16:../cola_pintado.c ****     }
+  17:../cola_pintado.c **** }
+ 1264              		.loc 1 17 0
+ 1265 0058 0CD04BE2 		sub	sp, fp, #12
+ 1266 005c 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 1267 0060 1EFF2FE1 		bx	lr
+ 1268              	.L4:
+ 1269              		.align	2
+ 1270              	.L3:
+ 1271 0064 00000000 		.word	indice_prod
+ 1272 0068 00000000 		.word	trabajos
+ 1273              		.cfi_endproc
+ 1274              	.LFE0:
+ 1276              		.align	2
+ 1277              		.global	init_cola
+ 1279              	init_cola:
+ 1280              	.LFB1:
+  18:../cola_pintado.c **** 
+  19:../cola_pintado.c **** void init_cola(){
+ 1281              		.loc 1 19 0
+ 1282              		.cfi_startproc
+ 1283              		@ Function supports interworking.
+ 1284              		@ args = 0, pretend = 0, frame = 0
+ 1285              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1286 006c 0DC0A0E1 		mov	ip, sp
+ 1287              	.LCFI2:
+ 1288              		.cfi_def_cfa_register 12
+ 1289 0070 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1290 0074 04B04CE2 		sub	fp, ip, #4
+ 1291              		.cfi_offset 14, -8
+ 1292              		.cfi_offset 13, -12
+ 1293              		.cfi_offset 11, -16
+ 1294              	.LCFI3:
+ 1295              		.cfi_def_cfa 11, 4
+  20:../cola_pintado.c **** 	indice_prod = 0;
+ 1296              		.loc 1 20 0
+ 1297 0078 1C309FE5 		ldr	r3, .L6
+ 1298 007c 0020A0E3 		mov	r2, #0
+ 1299 0080 002083E5 		str	r2, [r3, #0]
+  21:../cola_pintado.c **** 	indice_cons = 0;
+ 1300              		.loc 1 21 0
+ 1301 0084 14309FE5 		ldr	r3, .L6+4
+ 1302 0088 0020A0E3 		mov	r2, #0
+ 1303 008c 002083E5 		str	r2, [r3, #0]
+  22:../cola_pintado.c **** }
+ 1304              		.loc 1 22 0
+ 1305 0090 0CD04BE2 		sub	sp, fp, #12
+ 1306 0094 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 1307 0098 1EFF2FE1 		bx	lr
+ 1308              	.L7:
+ 1309              		.align	2
+ 1310              	.L6:
+ 1311 009c 00000000 		.word	indice_prod
+ 1312 00a0 00000000 		.word	indice_cons
+ 1313              		.cfi_endproc
+ 1314              	.LFE1:
+ 1316              		.align	2
+ 1317              		.global	hay_trabajos_encolados
+ 1319              	hay_trabajos_encolados:
+ 1320              	.LFB2:
+  23:../cola_pintado.c **** 
+  24:../cola_pintado.c **** int hay_trabajos_encolados(){
+ 1321              		.loc 1 24 0
+ 1322              		.cfi_startproc
+ 1323              		@ Function supports interworking.
+ 1324              		@ args = 0, pretend = 0, frame = 0
+ 1325              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1326 00a4 0DC0A0E1 		mov	ip, sp
+ 1327              	.LCFI4:
+ 1328              		.cfi_def_cfa_register 12
+ 1329 00a8 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1330 00ac 04B04CE2 		sub	fp, ip, #4
+ 1331              		.cfi_offset 14, -8
+ 1332              		.cfi_offset 13, -12
+ 1333              		.cfi_offset 11, -16
+ 1334              	.LCFI5:
+ 1335              		.cfi_def_cfa 11, 4
+  25:../cola_pintado.c **** 	return indice_prod != indice_cons;
+ 1336              		.loc 1 25 0
+ 1337 00b0 24309FE5 		ldr	r3, .L9
+ 1338 00b4 002093E5 		ldr	r2, [r3, #0]
+ 1339 00b8 20309FE5 		ldr	r3, .L9+4
+ 1340 00bc 003093E5 		ldr	r3, [r3, #0]
+ 1341 00c0 030052E1 		cmp	r2, r3
+ 1342 00c4 0030A003 		moveq	r3, #0
+ 1343 00c8 0130A013 		movne	r3, #1
+  26:../cola_pintado.c **** }
+ 1344              		.loc 1 26 0
+ 1345 00cc 0300A0E1 		mov	r0, r3
+ 1346 00d0 0CD04BE2 		sub	sp, fp, #12
+ 1347 00d4 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 1348 00d8 1EFF2FE1 		bx	lr
+ 1349              	.L10:
+ 1350              		.align	2
+ 1351              	.L9:
+ 1352 00dc 00000000 		.word	indice_prod
+ 1353 00e0 00000000 		.word	indice_cons
+ 1354              		.cfi_endproc
+ 1355              	.LFE2:
+ 1357              		.align	2
+ 1358              		.global	obtener_trabajo
+ 1360              	obtener_trabajo:
+ 1361              	.LFB3:
+  27:../cola_pintado.c **** 
+  28:../cola_pintado.c **** int obtener_trabajo(){
+ 1362              		.loc 1 28 0
+ 1363              		.cfi_startproc
+ 1364              		@ Function supports interworking.
+ 1365              		@ args = 0, pretend = 0, frame = 8
+ 1366              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1367 00e4 0DC0A0E1 		mov	ip, sp
+ 1368              	.LCFI6:
+ 1369              		.cfi_def_cfa_register 12
+ 1370 00e8 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1371 00ec 04B04CE2 		sub	fp, ip, #4
+ 1372              		.cfi_offset 14, -8
+ 1373              		.cfi_offset 13, -12
+ 1374              		.cfi_offset 11, -16
+ 1375              	.LCFI7:
+ 1376              		.cfi_def_cfa 11, 4
+ 1377 00f0 08D04DE2 		sub	sp, sp, #8
+  29:../cola_pintado.c ****     if (indice_cons == TAMANO_MAX)
+ 1378              		.loc 1 29 0
+ 1379 00f4 50309FE5 		ldr	r3, .L13
+ 1380 00f8 003093E5 		ldr	r3, [r3, #0]
+ 1381 00fc 0A0053E3 		cmp	r3, #10
+ 1382 0100 0200001A 		bne	.L12
+  30:../cola_pintado.c ****         indice_cons = 0;
+ 1383              		.loc 1 30 0
+ 1384 0104 40309FE5 		ldr	r3, .L13
+ 1385 0108 0020A0E3 		mov	r2, #0
+ 1386 010c 002083E5 		str	r2, [r3, #0]
+ 1387              	.L12:
+  31:../cola_pintado.c ****     int retval = indice_cons;
+ 1388              		.loc 1 31 0
+ 1389 0110 34309FE5 		ldr	r3, .L13
+ 1390 0114 003093E5 		ldr	r3, [r3, #0]
+ 1391 0118 10300BE5 		str	r3, [fp, #-16]
+  32:../cola_pintado.c ****     indice_cons++;
+ 1392              		.loc 1 32 0
+ 1393 011c 28309FE5 		ldr	r3, .L13
+ 1394 0120 003093E5 		ldr	r3, [r3, #0]
+ 1395 0124 012083E2 		add	r2, r3, #1
+ 1396 0128 1C309FE5 		ldr	r3, .L13
+ 1397 012c 002083E5 		str	r2, [r3, #0]
+  33:../cola_pintado.c **** 
+  34:../cola_pintado.c ****     return trabajos[retval];
+ 1398              		.loc 1 34 0
+ 1399 0130 18309FE5 		ldr	r3, .L13+4
+ 1400 0134 10201BE5 		ldr	r2, [fp, #-16]
+ 1401 0138 023193E7 		ldr	r3, [r3, r2, asl #2]
+  35:../cola_pintado.c **** }
+ 1402              		.loc 1 35 0
+ 1403 013c 0300A0E1 		mov	r0, r3
+ 1404 0140 0CD04BE2 		sub	sp, fp, #12
+ 1405 0144 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 1406 0148 1EFF2FE1 		bx	lr
+ 1407              	.L14:
+ 1408              		.align	2
+ 1409              	.L13:
+ 1410 014c 00000000 		.word	indice_cons
+ 1411 0150 00000000 		.word	trabajos
+ 1412              		.cfi_endproc
+ 1413              	.LFE3:
+ 1415              		.align	2
+ 1416              		.global	mostrar_cola
+ 1418              	mostrar_cola:
+ 1419              	.LFB4:
+  36:../cola_pintado.c **** 
+  37:../cola_pintado.c **** void mostrar_cola(){
+ 1420              		.loc 1 37 0
+ 1421              		.cfi_startproc
+ 1422              		@ Function supports interworking.
+ 1423              		@ args = 0, pretend = 0, frame = 8
+ 1424              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1425 0154 0DC0A0E1 		mov	ip, sp
+ 1426              	.LCFI8:
+ 1427              		.cfi_def_cfa_register 12
+ 1428 0158 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1429 015c 04B04CE2 		sub	fp, ip, #4
+ 1430              		.cfi_offset 14, -8
+ 1431              		.cfi_offset 13, -12
+ 1432              		.cfi_offset 11, -16
+ 1433              	.LCFI9:
+ 1434              		.cfi_def_cfa 11, 4
+ 1435 0160 08D04DE2 		sub	sp, sp, #8
+  38:../cola_pintado.c ****     int aux = indice_cons;
+ 1436              		.loc 1 38 0
+ 1437 0164 34309FE5 		ldr	r3, .L18
+ 1438 0168 003093E5 		ldr	r3, [r3, #0]
+ 1439 016c 10300BE5 		str	r3, [fp, #-16]
+  39:../cola_pintado.c ****     while(aux < indice_prod){
+ 1440              		.loc 1 39 0
+ 1441 0170 020000EA 		b	.L16
+ 1442              	.L17:
+  40:../cola_pintado.c ****         aux++;
+ 1443              		.loc 1 40 0
+ 1444 0174 10301BE5 		ldr	r3, [fp, #-16]
+ 1445 0178 013083E2 		add	r3, r3, #1
+ 1446 017c 10300BE5 		str	r3, [fp, #-16]
+ 1447              	.L16:
+  39:../cola_pintado.c ****     while(aux < indice_prod){
+ 1448              		.loc 1 39 0 discriminator 1
+ 1449 0180 1C309FE5 		ldr	r3, .L18+4
+ 1450 0184 003093E5 		ldr	r3, [r3, #0]
+ 1451 0188 10201BE5 		ldr	r2, [fp, #-16]
+ 1452 018c 030052E1 		cmp	r2, r3
+ 1453 0190 F7FFFFBA 		blt	.L17
+  41:../cola_pintado.c ****     }
+  42:../cola_pintado.c **** }
+ 1454              		.loc 1 42 0
+ 1455 0194 0CD04BE2 		sub	sp, fp, #12
+ 1456 0198 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 1457 019c 1EFF2FE1 		bx	lr
+ 1458              	.L19:
+ 1459              		.align	2
+ 1460              	.L18:
+ 1461 01a0 00000000 		.word	indice_cons
+ 1462 01a4 00000000 		.word	indice_prod
+ 1463              		.cfi_endproc
+ 1464              	.LFE4:
+ 1466              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 cola_pintado.c
+                            *COM*:00000004 indice_prod
+                            *COM*:00000004 indice_cons
+                            *COM*:00000028 trabajos
+C:\Users\a764429\AppData\Local\Temp\ccNBOJVP.s:1220   .text:00000000 $a
+C:\Users\a764429\AppData\Local\Temp\ccNBOJVP.s:1223   .text:00000000 encolar_tabajo
+C:\Users\a764429\AppData\Local\Temp\ccNBOJVP.s:1271   .text:00000064 $d
+C:\Users\a764429\AppData\Local\Temp\ccNBOJVP.s:1276   .text:0000006c $a
+C:\Users\a764429\AppData\Local\Temp\ccNBOJVP.s:1279   .text:0000006c init_cola
+C:\Users\a764429\AppData\Local\Temp\ccNBOJVP.s:1311   .text:0000009c $d
+C:\Users\a764429\AppData\Local\Temp\ccNBOJVP.s:1316   .text:000000a4 $a
+C:\Users\a764429\AppData\Local\Temp\ccNBOJVP.s:1319   .text:000000a4 hay_trabajos_encolados
+C:\Users\a764429\AppData\Local\Temp\ccNBOJVP.s:1352   .text:000000dc $d
+C:\Users\a764429\AppData\Local\Temp\ccNBOJVP.s:1357   .text:000000e4 $a
+C:\Users\a764429\AppData\Local\Temp\ccNBOJVP.s:1360   .text:000000e4 obtener_trabajo
+C:\Users\a764429\AppData\Local\Temp\ccNBOJVP.s:1410   .text:0000014c $d
+C:\Users\a764429\AppData\Local\Temp\ccNBOJVP.s:1415   .text:00000154 $a
+C:\Users\a764429\AppData\Local\Temp\ccNBOJVP.s:1418   .text:00000154 mostrar_cola
+C:\Users\a764429\AppData\Local\Temp\ccNBOJVP.s:1461   .text:000001a0 $d
+                     .debug_frame:00000010 $d
+
+NO UNDEFINED SYMBOLS

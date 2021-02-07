@@ -1,0 +1,483 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 6
+  10              		.eabi_attribute 18, 4
+  11              		.file	"boton_antirebotes.c"
+  21              	.Ltext0:
+  22              		.file 1 "../boton_antirebotes.c"
+ 1237              		.align	2
+ 1238              		.global	boton_antirebotes_inicializar
+ 1240              	boton_antirebotes_inicializar:
+ 1241              	.LFB0:
+   1:../boton_antirebotes.c **** /*
+   2:../boton_antirebotes.c ****  * boton_antirebotes.c
+   3:../boton_antirebotes.c ****  *
+   4:../boton_antirebotes.c ****  *  Created on: 02/11/2019
+   5:../boton_antirebotes.c ****  *      Author: Martin Gascón y Eduardo Ruiz
+   6:../boton_antirebotes.c ****  */
+   7:../boton_antirebotes.c **** 
+   8:../boton_antirebotes.c **** #include "boton_antirebotes.h"
+   9:../boton_antirebotes.c **** #include "button.h"
+  10:../boton_antirebotes.c **** #include "debug_stack.h"
+  11:../boton_antirebotes.c **** #include "stdint.h"
+  12:../boton_antirebotes.c **** 
+  13:../boton_antirebotes.c **** Estado_button boton_pulsado;
+  14:../boton_antirebotes.c **** uint32_t tiempo;
+  15:../boton_antirebotes.c **** int contador_mantenido;
+  16:../boton_antirebotes.c **** int tiempo_pulsacion;
+  17:../boton_antirebotes.c **** 
+  18:../boton_antirebotes.c **** 
+  19:../boton_antirebotes.c **** 
+  20:../boton_antirebotes.c **** void boton_antirebotes_inicializar(){
+ 1242              		.loc 1 20 0
+ 1243              		.cfi_startproc
+ 1244              		@ Function supports interworking.
+ 1245              		@ args = 0, pretend = 0, frame = 0
+ 1246              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1247 0000 0DC0A0E1 		mov	ip, sp
+ 1248              	.LCFI0:
+ 1249              		.cfi_def_cfa_register 12
+ 1250 0004 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1251 0008 04B04CE2 		sub	fp, ip, #4
+ 1252              		.cfi_offset 14, -8
+ 1253              		.cfi_offset 13, -12
+ 1254              		.cfi_offset 11, -16
+ 1255              	.LCFI1:
+ 1256              		.cfi_def_cfa 11, 4
+  21:../boton_antirebotes.c **** 	tiempo = 0;
+ 1257              		.loc 1 21 0
+ 1258 000c 2C309FE5 		ldr	r3, .L2
+ 1259 0010 0020A0E3 		mov	r2, #0
+ 1260 0014 002083E5 		str	r2, [r3, #0]
+  22:../boton_antirebotes.c **** 	contador_mantenido = 0;
+ 1261              		.loc 1 22 0
+ 1262 0018 24309FE5 		ldr	r3, .L2+4
+ 1263 001c 0020A0E3 		mov	r2, #0
+ 1264 0020 002083E5 		str	r2, [r3, #0]
+  23:../boton_antirebotes.c **** 	tiempo_pulsacion = 0;
+ 1265              		.loc 1 23 0
+ 1266 0024 1C309FE5 		ldr	r3, .L2+8
+ 1267 0028 0020A0E3 		mov	r2, #0
+ 1268 002c 002083E5 		str	r2, [r3, #0]
+  24:../boton_antirebotes.c **** 	button_iniciar();
+ 1269              		.loc 1 24 0
+ 1270 0030 FEFFFFEB 		bl	button_iniciar
+  25:../boton_antirebotes.c **** }
+ 1271              		.loc 1 25 0
+ 1272 0034 0CD04BE2 		sub	sp, fp, #12
+ 1273 0038 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 1274 003c 1EFF2FE1 		bx	lr
+ 1275              	.L3:
+ 1276              		.align	2
+ 1277              	.L2:
+ 1278 0040 00000000 		.word	tiempo
+ 1279 0044 00000000 		.word	contador_mantenido
+ 1280 0048 00000000 		.word	tiempo_pulsacion
+ 1281              		.cfi_endproc
+ 1282              	.LFE0:
+ 1284              		.align	2
+ 1285              		.global	button_down
+ 1287              	button_down:
+ 1288              	.LFB1:
+  26:../boton_antirebotes.c **** 
+  27:../boton_antirebotes.c **** // Apila el evento de pulsación en la pila de eventos.
+  28:../boton_antirebotes.c **** void button_down(){
+ 1289              		.loc 1 28 0
+ 1290              		.cfi_startproc
+ 1291              		@ Function supports interworking.
+ 1292              		@ args = 0, pretend = 0, frame = 0
+ 1293              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1294 004c 0DC0A0E1 		mov	ip, sp
+ 1295              	.LCFI2:
+ 1296              		.cfi_def_cfa_register 12
+ 1297 0050 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1298 0054 04B04CE2 		sub	fp, ip, #4
+ 1299              		.cfi_offset 14, -8
+ 1300              		.cfi_offset 13, -12
+ 1301              		.cfi_offset 11, -16
+ 1302              	.LCFI3:
+ 1303              		.cfi_def_cfa 11, 4
+  29:../boton_antirebotes.c **** 	if(button_estado() == BUTTON_IZ){
+ 1304              		.loc 1 29 0
+ 1305 0058 FEFFFFEB 		bl	button_estado
+ 1306 005c 0030A0E1 		mov	r3, r0
+ 1307 0060 010053E3 		cmp	r3, #1
+ 1308 0064 0300001A 		bne	.L5
+  30:../boton_antirebotes.c **** 		push_debug(EVENTO_IZ_BOTON_PULSADO, 1);
+ 1309              		.loc 1 30 0
+ 1310 0068 AA00A0E3 		mov	r0, #170
+ 1311 006c 0110A0E3 		mov	r1, #1
+ 1312 0070 FEFFFFEB 		bl	push_debug
+ 1313 0074 060000EA 		b	.L4
+ 1314              	.L5:
+  31:../boton_antirebotes.c **** 	}else if(button_estado() == BUTTON_DR){
+ 1315              		.loc 1 31 0
+ 1316 0078 FEFFFFEB 		bl	button_estado
+ 1317 007c 0030A0E1 		mov	r3, r0
+ 1318 0080 020053E3 		cmp	r3, #2
+ 1319 0084 0200001A 		bne	.L4
+  32:../boton_antirebotes.c **** 		push_debug(EVENTO_DR_BOTON_PULSADO, 1);
+ 1320              		.loc 1 32 0
+ 1321 0088 DA00A0E3 		mov	r0, #218
+ 1322 008c 0110A0E3 		mov	r1, #1
+ 1323 0090 FEFFFFEB 		bl	push_debug
+ 1324              	.L4:
+  33:../boton_antirebotes.c **** 	}
+  34:../boton_antirebotes.c **** }
+ 1325              		.loc 1 34 0
+ 1326 0094 0CD04BE2 		sub	sp, fp, #12
+ 1327 0098 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 1328 009c 1EFF2FE1 		bx	lr
+ 1329              		.cfi_endproc
+ 1330              	.LFE1:
+ 1332              		.align	2
+ 1333              		.global	button_up
+ 1335              	button_up:
+ 1336              	.LFB2:
+  35:../boton_antirebotes.c **** 
+  36:../boton_antirebotes.c **** // Apila el evento de soltado de boton en la pila de eventos cuando el usuario depresiona el boton.
+  37:../boton_antirebotes.c **** void button_up(Estado_button boton){
+ 1337              		.loc 1 37 0
+ 1338              		.cfi_startproc
+ 1339              		@ Function supports interworking.
+ 1340              		@ args = 0, pretend = 0, frame = 8
+ 1341              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1342 00a0 0DC0A0E1 		mov	ip, sp
+ 1343              	.LCFI4:
+ 1344              		.cfi_def_cfa_register 12
+ 1345 00a4 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1346 00a8 04B04CE2 		sub	fp, ip, #4
+ 1347              		.cfi_offset 14, -8
+ 1348              		.cfi_offset 13, -12
+ 1349              		.cfi_offset 11, -16
+ 1350              	.LCFI5:
+ 1351              		.cfi_def_cfa 11, 4
+ 1352 00ac 08D04DE2 		sub	sp, sp, #8
+ 1353 00b0 0030A0E1 		mov	r3, r0
+ 1354 00b4 0D304BE5 		strb	r3, [fp, #-13]
+  38:../boton_antirebotes.c **** 
+  39:../boton_antirebotes.c **** 	if(boton == BUTTON_IZ){
+ 1355              		.loc 1 39 0
+ 1356 00b8 0D305BE5 		ldrb	r3, [fp, #-13]	@ zero_extendqisi2
+ 1357 00bc 010053E3 		cmp	r3, #1
+ 1358 00c0 0300001A 		bne	.L8
+  40:../boton_antirebotes.c **** 		push_debug(EVENTO_IZ_BOTON_SOLTADO, 1);
+ 1359              		.loc 1 40 0
+ 1360 00c4 AB00A0E3 		mov	r0, #171
+ 1361 00c8 0110A0E3 		mov	r1, #1
+ 1362 00cc FEFFFFEB 		bl	push_debug
+ 1363 00d0 050000EA 		b	.L7
+ 1364              	.L8:
+  41:../boton_antirebotes.c **** 	}else if(boton == BUTTON_DR){
+ 1365              		.loc 1 41 0
+ 1366 00d4 0D305BE5 		ldrb	r3, [fp, #-13]	@ zero_extendqisi2
+ 1367 00d8 020053E3 		cmp	r3, #2
+ 1368 00dc 0200001A 		bne	.L7
+  42:../boton_antirebotes.c **** 		push_debug(EVENTO_DR_BOTON_SOLTADO, 1);
+ 1369              		.loc 1 42 0
+ 1370 00e0 DB00A0E3 		mov	r0, #219
+ 1371 00e4 0110A0E3 		mov	r1, #1
+ 1372 00e8 FEFFFFEB 		bl	push_debug
+ 1373              	.L7:
+  43:../boton_antirebotes.c **** 	}
+  44:../boton_antirebotes.c **** }
+ 1374              		.loc 1 44 0
+ 1375 00ec 0CD04BE2 		sub	sp, fp, #12
+ 1376 00f0 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 1377 00f4 1EFF2FE1 		bx	lr
+ 1378              		.cfi_endproc
+ 1379              	.LFE2:
+ 1381              		.align	2
+ 1382              		.global	button_ev_tick1
+ 1384              	button_ev_tick1:
+ 1385              	.LFB3:
+  45:../boton_antirebotes.c **** 
+  46:../boton_antirebotes.c **** //Controlador del boton antirebotes, será llamado cada 10 ms al procesar los eventos de reloj
+  47:../boton_antirebotes.c **** void button_ev_tick1(){
+ 1386              		.loc 1 47 0
+ 1387              		.cfi_startproc
+ 1388              		@ Function supports interworking.
+ 1389              		@ args = 0, pretend = 0, frame = 0
+ 1390              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1391 00f8 0DC0A0E1 		mov	ip, sp
+ 1392              	.LCFI6:
+ 1393              		.cfi_def_cfa_register 12
+ 1394 00fc 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1395 0100 04B04CE2 		sub	fp, ip, #4
+ 1396              		.cfi_offset 14, -8
+ 1397              		.cfi_offset 13, -12
+ 1398              		.cfi_offset 11, -16
+ 1399              	.LCFI7:
+ 1400              		.cfi_def_cfa 11, 4
+  48:../boton_antirebotes.c **** 	tiempo++;
+ 1401              		.loc 1 48 0
+ 1402 0104 B0319FE5 		ldr	r3, .L27
+ 1403 0108 003093E5 		ldr	r3, [r3, #0]
+ 1404 010c 012083E2 		add	r2, r3, #1
+ 1405 0110 A4319FE5 		ldr	r3, .L27
+ 1406 0114 002083E5 		str	r2, [r3, #0]
+  49:../boton_antirebotes.c **** 
+  50:../boton_antirebotes.c **** 	switch(estado_timer_button){
+ 1407              		.loc 1 50 0
+ 1408 0118 A0319FE5 		ldr	r3, .L27+4
+ 1409 011c 0030D3E5 		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 1410 0120 030053E3 		cmp	r3, #3
+ 1411 0124 03F19F97 		ldrls	pc, [pc, r3, asl #2]
+ 1412 0128 600000EA 		b	.L10
+ 1413              	.L16:
+ 1414 012c 3C010000 		.word	.L12
+ 1415 0130 88010000 		.word	.L13
+ 1416 0134 74020000 		.word	.L14
+ 1417 0138 B8010000 		.word	.L15
+ 1418              	.L12:
+  51:../boton_antirebotes.c **** 
+  52:../boton_antirebotes.c **** 		//Estado inicial, el automata está parado hasta que se pulse el botón
+  53:../boton_antirebotes.c **** 		case INICIAL:
+  54:../boton_antirebotes.c **** 			contador_mantenido = 0;
+ 1419              		.loc 1 54 0
+ 1420 013c 80319FE5 		ldr	r3, .L27+8
+ 1421 0140 0020A0E3 		mov	r2, #0
+ 1422 0144 002083E5 		str	r2, [r3, #0]
+  55:../boton_antirebotes.c **** 			boton_pulsado = button_estado();
+ 1423              		.loc 1 55 0
+ 1424 0148 FEFFFFEB 		bl	button_estado
+ 1425 014c 0030A0E1 		mov	r3, r0
+ 1426 0150 0320A0E1 		mov	r2, r3
+ 1427 0154 6C319FE5 		ldr	r3, .L27+12
+ 1428 0158 0020C3E5 		strb	r2, [r3, #0]
+  56:../boton_antirebotes.c **** 			if(boton_pulsado != BUTTON_NONE){
+ 1429              		.loc 1 56 0
+ 1430 015c 64319FE5 		ldr	r3, .L27+12
+ 1431 0160 0030D3E5 		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 1432 0164 000053E3 		cmp	r3, #0
+ 1433 0168 0300000A 		beq	.L17
+  57:../boton_antirebotes.c **** 				estado_timer_button = REBOTES_SUBIDA;
+ 1434              		.loc 1 57 0
+ 1435 016c 4C319FE5 		ldr	r3, .L27+4
+ 1436 0170 0120A0E3 		mov	r2, #1
+ 1437 0174 0020C3E5 		strb	r2, [r3, #0]
+  58:../boton_antirebotes.c **** 			}else{
+  59:../boton_antirebotes.c **** 				timer1_parar();
+  60:../boton_antirebotes.c **** 				button_resetear();
+  61:../boton_antirebotes.c **** 			}
+  62:../boton_antirebotes.c **** 			break;
+ 1438              		.loc 1 62 0
+ 1439 0178 4C0000EA 		b	.L10
+ 1440              	.L17:
+ 1441              	.LBB2:
+  59:../boton_antirebotes.c **** 				timer1_parar();
+ 1442              		.loc 1 59 0
+ 1443 017c FEFFFFEB 		bl	timer1_parar
+  60:../boton_antirebotes.c **** 				button_resetear();
+ 1444              		.loc 1 60 0
+ 1445 0180 FEFFFFEB 		bl	button_resetear
+ 1446              	.LBE2:
+ 1447              		.loc 1 62 0
+ 1448 0184 490000EA 		b	.L10
+ 1449              	.L13:
+  63:../boton_antirebotes.c **** 
+  64:../boton_antirebotes.c **** 		//El automata espera a que terminen los rebotes de presión del botón
+  65:../boton_antirebotes.c **** 		case REBOTES_SUBIDA:
+  66:../boton_antirebotes.c **** 			if(tiempo >= TRP){
+ 1450              		.loc 1 66 0
+ 1451 0188 2C319FE5 		ldr	r3, .L27
+ 1452 018c 003093E5 		ldr	r3, [r3, #0]
+ 1453 0190 020053E3 		cmp	r3, #2
+ 1454 0194 4000009A 		bls	.L24
+  67:../boton_antirebotes.c **** 				estado_timer_button = BOTON_ESTABLE;
+ 1455              		.loc 1 67 0
+ 1456 0198 20319FE5 		ldr	r3, .L27+4
+ 1457 019c 0320A0E3 		mov	r2, #3
+ 1458 01a0 0020C3E5 		strb	r2, [r3, #0]
+  68:../boton_antirebotes.c **** 				button_down();
+ 1459              		.loc 1 68 0
+ 1460 01a4 FEFFFFEB 		bl	button_down
+  69:../boton_antirebotes.c **** 				tiempo = 0;
+ 1461              		.loc 1 69 0
+ 1462 01a8 0C319FE5 		ldr	r3, .L27
+ 1463 01ac 0020A0E3 		mov	r2, #0
+ 1464 01b0 002083E5 		str	r2, [r3, #0]
+  70:../boton_antirebotes.c **** 			}
+  71:../boton_antirebotes.c **** 			break;
+ 1465              		.loc 1 71 0
+ 1466 01b4 3D0000EA 		b	.L10
+ 1467              	.L15:
+  72:../boton_antirebotes.c **** 
+  73:../boton_antirebotes.c **** 		// Una vez pasado el tiempo de TRP el botón encuesta el estado del botón hasta que se suelta
+  74:../boton_antirebotes.c **** 		//Si se pulsa durante un tercio de segundo se generan nuevos eventos de pulsacion (Autoincremento
+  75:../boton_antirebotes.c **** 
+  76:../boton_antirebotes.c **** 		case BOTON_ESTABLE:
+  77:../boton_antirebotes.c **** 			tiempo_pulsacion++;
+ 1468              		.loc 1 77 0
+ 1469 01b8 0C319FE5 		ldr	r3, .L27+16
+ 1470 01bc 003093E5 		ldr	r3, [r3, #0]
+ 1471 01c0 012083E2 		add	r2, r3, #1
+ 1472 01c4 00319FE5 		ldr	r3, .L27+16
+ 1473 01c8 002083E5 		str	r2, [r3, #0]
+  78:../boton_antirebotes.c **** 			//Contamos cuanto tiempo mantiene pulsado inicialmente el boton para disparar el autoincremento
+  79:../boton_antirebotes.c **** 			//salta en 1/3 de segundo, a partir de ese momento se mide el tiempo con la variable tiempo.
+  80:../boton_antirebotes.c **** 			if(tiempo_pulsacion >= TIEMPO_ESPERA_AUTOINCREMENTO && !contador_mantenido){
+ 1474              		.loc 1 80 0
+ 1475 01cc F8309FE5 		ldr	r3, .L27+16
+ 1476 01d0 003093E5 		ldr	r3, [r3, #0]
+ 1477 01d4 1D0053E3 		cmp	r3, #29
+ 1478 01d8 090000DA 		ble	.L20
+ 1479              		.loc 1 80 0 is_stmt 0 discriminator 1
+ 1480 01dc E0309FE5 		ldr	r3, .L27+8
+ 1481 01e0 003093E5 		ldr	r3, [r3, #0]
+ 1482 01e4 000053E3 		cmp	r3, #0
+ 1483 01e8 0500001A 		bne	.L20
+  81:../boton_antirebotes.c **** 				contador_mantenido = 1;
+ 1484              		.loc 1 81 0 is_stmt 1
+ 1485 01ec D0309FE5 		ldr	r3, .L27+8
+ 1486 01f0 0120A0E3 		mov	r2, #1
+ 1487 01f4 002083E5 		str	r2, [r3, #0]
+  82:../boton_antirebotes.c **** 				tiempo = 0;
+ 1488              		.loc 1 82 0
+ 1489 01f8 BC309FE5 		ldr	r3, .L27
+ 1490 01fc 0020A0E3 		mov	r2, #0
+ 1491 0200 002083E5 		str	r2, [r3, #0]
+ 1492              	.L20:
+  83:../boton_antirebotes.c **** 			}
+  84:../boton_antirebotes.c **** 
+  85:../boton_antirebotes.c **** 
+  86:../boton_antirebotes.c **** 			if(tiempo >= TIEMPO_ENCUESTA){
+ 1493              		.loc 1 86 0
+ 1494 0204 B0309FE5 		ldr	r3, .L27
+ 1495 0208 003093E5 		ldr	r3, [r3, #0]
+ 1496 020c 110053E3 		cmp	r3, #17
+ 1497 0210 2300009A 		bls	.L25
+  87:../boton_antirebotes.c **** 				if(button_estado() != boton_pulsado){	//ya ha soltado el botón.
+ 1498              		.loc 1 87 0
+ 1499 0214 FEFFFFEB 		bl	button_estado
+ 1500 0218 0030A0E1 		mov	r3, r0
+ 1501 021c 0320A0E1 		mov	r2, r3
+ 1502 0220 A0309FE5 		ldr	r3, .L27+12
+ 1503 0224 0030D3E5 		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 1504 0228 030052E1 		cmp	r2, r3
+ 1505 022c 0C00000A 		beq	.L22
+  88:../boton_antirebotes.c **** 					button_up(boton_pulsado);
+ 1506              		.loc 1 88 0
+ 1507 0230 90309FE5 		ldr	r3, .L27+12
+ 1508 0234 0030D3E5 		ldrb	r3, [r3, #0]	@ zero_extendqisi2
+ 1509 0238 0300A0E1 		mov	r0, r3
+ 1510 023c FEFFFFEB 		bl	button_up
+  89:../boton_antirebotes.c **** 					contador_mantenido = 0;
+ 1511              		.loc 1 89 0
+ 1512 0240 7C309FE5 		ldr	r3, .L27+8
+ 1513 0244 0020A0E3 		mov	r2, #0
+ 1514 0248 002083E5 		str	r2, [r3, #0]
+  90:../boton_antirebotes.c **** 					estado_timer_button = REBOTES_BAJADA;
+ 1515              		.loc 1 90 0
+ 1516 024c 6C309FE5 		ldr	r3, .L27+4
+ 1517 0250 0220A0E3 		mov	r2, #2
+ 1518 0254 0020C3E5 		strb	r2, [r3, #0]
+  91:../boton_antirebotes.c **** 					tiempo_pulsacion = 0;
+ 1519              		.loc 1 91 0
+ 1520 0258 6C309FE5 		ldr	r3, .L27+16
+ 1521 025c 0020A0E3 		mov	r2, #0
+ 1522 0260 002083E5 		str	r2, [r3, #0]
+ 1523              	.L22:
+  92:../boton_antirebotes.c **** 				}else{
+  93:../boton_antirebotes.c **** 					//if(contador_mantenido)
+  94:../boton_antirebotes.c **** 					//	button_up(boton_pulsado);
+  95:../boton_antirebotes.c **** 				}
+  96:../boton_antirebotes.c **** 				tiempo = 0;
+ 1524              		.loc 1 96 0
+ 1525 0264 50309FE5 		ldr	r3, .L27
+ 1526 0268 0020A0E3 		mov	r2, #0
+ 1527 026c 002083E5 		str	r2, [r3, #0]
+  97:../boton_antirebotes.c **** 			}
+  98:../boton_antirebotes.c **** 			break;
+ 1528              		.loc 1 98 0
+ 1529 0270 0E0000EA 		b	.L10
+ 1530              	.L14:
+  99:../boton_antirebotes.c **** 		//El automata espera a que terminen los rebotes de depresión del botón
+ 100:../boton_antirebotes.c **** 		case REBOTES_BAJADA:
+ 101:../boton_antirebotes.c **** 			if(tiempo >= TRD){
+ 1531              		.loc 1 101 0
+ 1532 0274 40309FE5 		ldr	r3, .L27
+ 1533 0278 003093E5 		ldr	r3, [r3, #0]
+ 1534 027c 020053E3 		cmp	r3, #2
+ 1535 0280 0900009A 		bls	.L26
+ 1536              	.LBB3:
+ 102:../boton_antirebotes.c **** 				timer1_parar();
+ 1537              		.loc 1 102 0
+ 1538 0284 FEFFFFEB 		bl	timer1_parar
+ 103:../boton_antirebotes.c **** 				button_resetear();
+ 1539              		.loc 1 103 0
+ 1540 0288 FEFFFFEB 		bl	button_resetear
+ 104:../boton_antirebotes.c **** 				estado_timer_button = INICIAL;
+ 1541              		.loc 1 104 0
+ 1542 028c 2C309FE5 		ldr	r3, .L27+4
+ 1543 0290 0020A0E3 		mov	r2, #0
+ 1544 0294 0020C3E5 		strb	r2, [r3, #0]
+ 1545              	.LBE3:
+ 105:../boton_antirebotes.c **** 			}
+ 106:../boton_antirebotes.c **** 			break;
+ 1546              		.loc 1 106 0
+ 1547 0298 040000EA 		b	.L10
+ 1548              	.L24:
+  71:../boton_antirebotes.c **** 			break;
+ 1549              		.loc 1 71 0
+ 1550 029c 0000A0E1 		mov	r0, r0	@ nop
+ 1551 02a0 020000EA 		b	.L10
+ 1552              	.L25:
+  98:../boton_antirebotes.c **** 			break;
+ 1553              		.loc 1 98 0
+ 1554 02a4 0000A0E1 		mov	r0, r0	@ nop
+ 1555 02a8 000000EA 		b	.L10
+ 1556              	.L26:
+ 1557              		.loc 1 106 0
+ 1558 02ac 0000A0E1 		mov	r0, r0	@ nop
+ 1559              	.L10:
+ 107:../boton_antirebotes.c **** 	}
+ 108:../boton_antirebotes.c **** }
+ 1560              		.loc 1 108 0
+ 1561 02b0 0CD04BE2 		sub	sp, fp, #12
+ 1562 02b4 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 1563 02b8 1EFF2FE1 		bx	lr
+ 1564              	.L28:
+ 1565              		.align	2
+ 1566              	.L27:
+ 1567 02bc 00000000 		.word	tiempo
+ 1568 02c0 00000000 		.word	estado_timer_button
+ 1569 02c4 00000000 		.word	contador_mantenido
+ 1570 02c8 00000000 		.word	boton_pulsado
+ 1571 02cc 00000000 		.word	tiempo_pulsacion
+ 1572              		.cfi_endproc
+ 1573              	.LFE3:
+ 1575              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 boton_antirebotes.c
+                            *COM*:00000004 boton
+                            *COM*:00000001 estado_button
+                            *COM*:00000001 estado_timer_button
+                            *COM*:00000001 boton_pulsado
+                            *COM*:00000004 tiempo
+                            *COM*:00000004 contador_mantenido
+                            *COM*:00000004 tiempo_pulsacion
+C:\Users\a764429\AppData\Local\Temp\ccHKWy8w.s:1237   .text:00000000 $a
+C:\Users\a764429\AppData\Local\Temp\ccHKWy8w.s:1240   .text:00000000 boton_antirebotes_inicializar
+C:\Users\a764429\AppData\Local\Temp\ccHKWy8w.s:1278   .text:00000040 $d
+C:\Users\a764429\AppData\Local\Temp\ccHKWy8w.s:1284   .text:0000004c $a
+C:\Users\a764429\AppData\Local\Temp\ccHKWy8w.s:1287   .text:0000004c button_down
+C:\Users\a764429\AppData\Local\Temp\ccHKWy8w.s:1335   .text:000000a0 button_up
+C:\Users\a764429\AppData\Local\Temp\ccHKWy8w.s:1384   .text:000000f8 button_ev_tick1
+C:\Users\a764429\AppData\Local\Temp\ccHKWy8w.s:1414   .text:0000012c $d
+C:\Users\a764429\AppData\Local\Temp\ccHKWy8w.s:1420   .text:0000013c $a
+C:\Users\a764429\AppData\Local\Temp\ccHKWy8w.s:1567   .text:000002bc $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+button_iniciar
+button_estado
+push_debug
+timer1_parar
+button_resetear

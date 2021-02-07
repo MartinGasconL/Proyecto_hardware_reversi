@@ -1,0 +1,16 @@
+#include "button.h"
+
+typedef	enum
+{
+	INICIAL,
+	REBOTES_SUBIDA,
+	REBOTES_BAJADA,
+	BOTON_ESTABLE
+} Estado_timer_button;
+Estado_timer_button estado_timer_button;
+enum {TRP = 3, TRD = 3, TIEMPO_ESPERA_AUTOINCREMENTO = 30, TIEMPO_ENCUESTA = 18};
+enum {TIEMPO_REBOTES_SUBIDA = 7, TIEMPO_REBOTES_BAJADA = 7};
+void boton_antirebotes_inicializar();
+void button_down();
+void button_up(Estado_button boton);
+void button_ev_tick1();

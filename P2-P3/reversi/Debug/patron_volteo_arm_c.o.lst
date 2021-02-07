@@ -1,0 +1,112 @@
+   1              	# 1 "../patron_volteo_arm_c.asm"
+   1              	.global patron_volteo_arm_c
+   0              	
+   0              	
+   0              	
+   2              	.extern ficha_valida
+   3 0000 00000000 	espacio: .space 4
+   4              	#r0 tablero
+   5              	#r1 longitud
+   6              	#r2 FA
+   7              	#r3 CA
+   8              	.arm
+   9              	patron_volteo_arm_c:
+  10              		@r0-->@tablero
+  11              		@r1-->@longitud
+  12              		@r2-->FA
+  13              		@r3-->CA
+  14              		@r4-->SF
+  15              		@r5-->SC
+  16              		@r6-->color
+  17              		@r7-->@pos_valida
+  18              	
+  19 0004 0DC0A0E1 		mov ip, sp								@Cargamos la direccion en pila de los parametros
+  20 0008 F3402DE9 		stmfd sp!, {r0,r1,r4-r7, lr} 			@Salvamos el contexto y r0 y r1 para no perderlo en la llamada
+  21              	
+  22 000c 70009CE8 		ldmfd ip, {r4-r6}						@Cargamos valores de las variables
+  23              	
+  24 0010 042082E0 		add r2, r2, r4
+  25 0014 053083E0 		add r3, r3, r5
+  26 0018 0C002DE9 		stmfd sp!, {r2, r3}
+  27              	
+  28 001c 0210A0E1 		mov r1, r2			@r1<--FA		|
+  29 0020 0320A0E1 		mov r2, r3			@r2<--CA		|	cargamos los parametros de ficha_valida
+  30 0024 98309FE5 		ldr r3, =espacio	@r3<--pos_valida|
+  31              	
+  32 0028 FEFFFFEB 		bl  ficha_valida
+  33              	
+  34              	bucle:
+  35 002c 90309FE5 		ldr r3, =espacio					@
+  36 0030 003093E5 		ldr r3, [r3]						@	Cargamos el contenido de posicion valida
+  37              	
+  38 0034 010053E3 		cmp r3, #1							@	si la posicion no es valida
+  39 0038 0F00001A 		bne salir_bucle						@
+  40              	
+  41 003c 060050E1 		cmp r0, r6							@ 	si el color es igual
+  42 0040 0D00000A 		beq salir_bucle						@
+  43 0044 0C00BDE8 		ldmia sp!, {r2,r3}
+  44              	
+  45 0048 042082E0 		add r2, r2, r4						@FA = FA + SF
+  46 004c 053083E0 		add r3, r3, r5						@CA = CA + SC
+  47              	
+  48 0050 0300BDE8 		ldmia sp!, {r0,r1}					@	Recuperamos tablero y longitud
+  49              	
+  50 0054 007091E5 		ldr r7, [r1, #0]					@	|
+  51 0058 017087E2 		add r7, r7, #1						@	|	longitud ++
+  52 005c 007081E5 		str r7, [r1, #0]					@ 	|
+  53              	
+  54 0060 03002DE9 		stmdb sp!, {r0,r1}
+  55              	
+  56 0064 0C002DE9 		stmfd sp!, {r2, r3}
+  57 0068 0210A0E1 		mov r1, r2							@ 	|	cargo los parametros a pasar a ficha valida (tablero, FA, CA)
+  58 006c 0320A0E1 		mov r2, r3							@	|
+  59 0070 4C309FE5 		ldr r3, =espacio
+  60              	
+  61 0074 FEFFFFEB 		bl  ficha_valida
+  62 0078 EBFFFFEA 		b bucle
+  63              	
+  64              	salir_bucle:
+  65              	
+  66 007c 40309FE5 		ldr r3, =espacio					@
+  67 0080 003093E5 		ldr r3, [r3]						@	Cargamos el contenido de posicion valida
+  68              	
+  69 0084 010053E3 		cmp r3, #1							@	si la posicion no es valida
+  70 0088 0900001A 		bne no_patron_carga_pila			@
+  71              	
+  72 008c 0C00BDE8 		ldmia sp!, {r2,r3}
+  73 0090 060050E1 		cmp r0, r6							@	Si el color de la ultima ficha de patron_volteo no es igual a la
+  74 0094 0700001A 		bne no_patron						@   inicial entonces no hay patron
+  75              	
+  76 0098 03009DE8 		ldmia sp, {r0, r1}
+  77              	
+  78 009c 007091E5 		ldr r7, [r1, #0]					@
+  79 00a0 000057E3 		cmp r7, #0							@	Si la longitud es menor o igual que 0 no hay patron
+  80 00a4 0300009A 		bls no_patron						@
+  81              	
+  82 00a8 F340BDE8 		ldmia sp!, {r0,r1,r4-r7, lr} 		@	Recuperamos el contexto
+  83              	
+  84 00ac 0100A0E3 		mov r0, #1							@ 	Si he llegado hasta aqui es porque hay patron
+  85              	
+  86 00b0 1EFF2FE1 		bx lr								@	Volvemos a la siguiente instruccion a la de llamada a patron_volteo_arm
+  87              	
+  88              	no_patron_carga_pila:
+  89 00b4 0C00BDE8 		ldmia sp!, {r2, r3}
+  90              	no_patron:
+  91 00b8 F340BDE8 		ldmia sp!, {r0,r1,r4-r7, lr} 		@   Recuperamos el contexto
+  92 00bc 0000A0E3 		mov r0, #0
+  93 00c0 1EFF2FE1 		bx lr
+  94 00c4 00000000 	.end
+DEFINED SYMBOLS
+../patron_volteo_arm_c.asm:9      .text:00000004 patron_volteo_arm_c
+../patron_volteo_arm_c.asm:3      .text:00000000 espacio
+../patron_volteo_arm_c.asm:3      .text:00000000 $d
+../patron_volteo_arm_c.asm:19     .text:00000004 $a
+../patron_volteo_arm_c.asm:34     .text:0000002c bucle
+../patron_volteo_arm_c.asm:64     .text:0000007c salir_bucle
+../patron_volteo_arm_c.asm:88     .text:000000b4 no_patron_carga_pila
+../patron_volteo_arm_c.asm:90     .text:000000b8 no_patron
+../patron_volteo_arm_c.asm:94     .text:000000c4 $d
+                   .debug_aranges:0000000c $d
+
+UNDEFINED SYMBOLS
+ficha_valida

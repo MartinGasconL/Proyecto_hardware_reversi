@@ -1,0 +1,174 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 6
+  10              		.eabi_attribute 18, 4
+  11              		.file	"main.c"
+  21              	.Ltext0:
+  22              		.file 1 "../main.c"
+ 1880              		.align	2
+ 1881              		.global	Main
+ 1883              	Main:
+ 1884              	.LFB0:
+   1:../main.c     **** /*********************************************************************************************
+   2:../main.c     **** * Fichero:	main.c
+   3:../main.c     **** * Autor:
+   4:../main.c     **** * Descrip:	punto de entrada de C
+   5:../main.c     **** * Version:  <P4-ARM.timer-leds>
+   6:../main.c     **** *********************************************************************************************/
+   7:../main.c     **** 
+   8:../main.c     **** /*--- ficheros de cabecera ---*/
+   9:../main.c     **** 
+  10:../main.c     **** #include "timer.h"
+  11:../main.c     **** #include "44blib.h"
+  12:../main.c     **** #include "44b.h"
+  13:../main.c     **** 
+  14:../main.c     **** /*--- variables globales ---*/
+  15:../main.c     **** 
+  16:../main.c     **** 
+  17:../main.c     **** /*--- codigo de funciones ---*/
+  18:../main.c     **** void Main(void)
+  19:../main.c     **** {
+ 1885              		.loc 1 19 0
+ 1886              		.cfi_startproc
+ 1887              		@ Function supports interworking.
+ 1888              		@ args = 0, pretend = 0, frame = 0
+ 1889              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1890 0000 0DC0A0E1 		mov	ip, sp
+ 1891              	.LCFI0:
+ 1892              		.cfi_def_cfa_register 12
+ 1893 0004 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1894 0008 04B04CE2 		sub	fp, ip, #4
+ 1895              		.cfi_offset 14, -8
+ 1896              		.cfi_offset 13, -12
+ 1897              		.cfi_offset 11, -16
+ 1898              	.LCFI1:
+ 1899              		.cfi_def_cfa 11, 4
+  20:../main.c     **** 	/* Inicializa controladores */
+  21:../main.c     **** 	sys_init();         // Inicializacion de la placa, interrupciones y puertos
+ 1900              		.loc 1 21 0
+ 1901 000c FEFFFFEB 		bl	sys_init
+  22:../main.c     **** 	//reversi8();
+  23:../main.c     **** 	test();
+ 1902              		.loc 1 23 0
+ 1903 0010 FEFFFFEB 		bl	test
+  24:../main.c     **** 	//test_timer();
+  25:../main.c     **** 
+  26:../main.c     **** }
+ 1904              		.loc 1 26 0
+ 1905 0014 0CD04BE2 		sub	sp, fp, #12
+ 1906 0018 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 1907 001c 1EFF2FE1 		bx	lr
+ 1908              		.cfi_endproc
+ 1909              	.LFE0:
+ 1911              		.align	2
+ 1912              		.global	test_timer
+ 1914              	test_timer:
+ 1915              	.LFB1:
+  27:../main.c     **** 
+  28:../main.c     **** void test_timer(){
+ 1916              		.loc 1 28 0
+ 1917              		.cfi_startproc
+ 1918              		@ Function supports interworking.
+ 1919              		@ args = 0, pretend = 0, frame = 16
+ 1920              		@ frame_needed = 1, uses_anonymous_args = 0
+ 1921 0020 0DC0A0E1 		mov	ip, sp
+ 1922              	.LCFI2:
+ 1923              		.cfi_def_cfa_register 12
+ 1924 0024 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 1925 0028 04B04CE2 		sub	fp, ip, #4
+ 1926              		.cfi_offset 14, -8
+ 1927              		.cfi_offset 13, -12
+ 1928              		.cfi_offset 11, -16
+ 1929              	.LCFI3:
+ 1930              		.cfi_def_cfa 11, 4
+ 1931 002c 10D04DE2 		sub	sp, sp, #16
+  29:../main.c     **** 	timer2_inicializar();
+ 1932              		.loc 1 29 0
+ 1933 0030 FEFFFFEB 		bl	timer2_inicializar
+  30:../main.c     **** 	timer2_empezar();
+ 1934              		.loc 1 30 0
+ 1935 0034 FEFFFFEB 		bl	timer2_empezar
+  31:../main.c     **** 	Delay(10);	// * 100 us
+ 1936              		.loc 1 31 0
+ 1937 0038 0A00A0E3 		mov	r0, #10
+ 1938 003c FEFFFFEB 		bl	Delay
+  32:../main.c     **** 	unsigned int primera_lectura = timer2_parar();
+ 1939              		.loc 1 32 0
+ 1940 0040 FEFFFFEB 		bl	timer2_parar
+ 1941 0044 0030A0E1 		mov	r3, r0
+ 1942 0048 10300BE5 		str	r3, [fp, #-16]
+  33:../main.c     **** 	timer2_empezar();
+ 1943              		.loc 1 33 0
+ 1944 004c FEFFFFEB 		bl	timer2_empezar
+  34:../main.c     **** 	Delay(100);	// * 100 us
+ 1945              		.loc 1 34 0
+ 1946 0050 6400A0E3 		mov	r0, #100
+ 1947 0054 FEFFFFEB 		bl	Delay
+  35:../main.c     **** 	unsigned int segunda_lectura = timer2_parar();
+ 1948              		.loc 1 35 0
+ 1949 0058 FEFFFFEB 		bl	timer2_parar
+ 1950 005c 0030A0E1 		mov	r3, r0
+ 1951 0060 14300BE5 		str	r3, [fp, #-20]
+  36:../main.c     **** 	timer2_empezar();
+ 1952              		.loc 1 36 0
+ 1953 0064 FEFFFFEB 		bl	timer2_empezar
+  37:../main.c     **** 	Delay(10000);	// * 100 us
+ 1954              		.loc 1 37 0
+ 1955 0068 34009FE5 		ldr	r0, .L3
+ 1956 006c FEFFFFEB 		bl	Delay
+  38:../main.c     **** 	unsigned int tercera_lectura = timer2_parar();
+ 1957              		.loc 1 38 0
+ 1958 0070 FEFFFFEB 		bl	timer2_parar
+ 1959 0074 0030A0E1 		mov	r3, r0
+ 1960 0078 18300BE5 		str	r3, [fp, #-24]
+  39:../main.c     **** 	timer2_empezar();
+ 1961              		.loc 1 39 0
+ 1962 007c FEFFFFEB 		bl	timer2_empezar
+  40:../main.c     **** 	Delay(100000);	// * 100 us
+ 1963              		.loc 1 40 0
+ 1964 0080 20009FE5 		ldr	r0, .L3+4
+ 1965 0084 FEFFFFEB 		bl	Delay
+  41:../main.c     **** 	unsigned int cuarta_lectura = timer2_leer();
+ 1966              		.loc 1 41 0
+ 1967 0088 FEFFFFEB 		bl	timer2_leer
+ 1968 008c 0030A0E1 		mov	r3, r0
+ 1969 0090 1C300BE5 		str	r3, [fp, #-28]
+  42:../main.c     **** 	timer2_parar();
+ 1970              		.loc 1 42 0
+ 1971 0094 FEFFFFEB 		bl	timer2_parar
+  43:../main.c     **** }
+ 1972              		.loc 1 43 0
+ 1973 0098 0CD04BE2 		sub	sp, fp, #12
+ 1974 009c 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 1975 00a0 1EFF2FE1 		bx	lr
+ 1976              	.L4:
+ 1977              		.align	2
+ 1978              	.L3:
+ 1979 00a4 10270000 		.word	10000
+ 1980 00a8 A0860100 		.word	100000
+ 1981              		.cfi_endproc
+ 1982              	.LFE1:
+ 1984              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 main.c
+                            *COM*:00000004 switch_leds
+C:\Users\Martin\AppData\Local\Temp\ccNHlZhN.s:1880   .text:00000000 $a
+C:\Users\Martin\AppData\Local\Temp\ccNHlZhN.s:1883   .text:00000000 Main
+C:\Users\Martin\AppData\Local\Temp\ccNHlZhN.s:1914   .text:00000020 test_timer
+C:\Users\Martin\AppData\Local\Temp\ccNHlZhN.s:1979   .text:000000a4 $d
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+sys_init
+test
+timer2_inicializar
+timer2_empezar
+Delay
+timer2_parar
+timer2_leer

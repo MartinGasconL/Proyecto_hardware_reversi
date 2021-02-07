@@ -1,0 +1,26 @@
+   1              	# 1 "../saltoExcep.asm"
+   1              	.arm
+   0              	
+   0              	
+   0              	
+   2              	.global DoUndef
+   3              	.global DoDabort
+   4              	
+   5 0000 100000E6 	DoUndef:	.word 0xE6000010
+   6 0004 0EF0A0E1 				mov pc,lr
+   7              	
+   8              	
+   9 0008 04009FE5 	DoDabort:	ldr r0,=0x0a333333
+  10 000c 000080E5 				str r0,[r0]
+  11 0010 0EF0A0E1 				mov pc,lr
+  12              	
+  13 0014 3333330A 	.end
+DEFINED SYMBOLS
+   ../saltoExcep.asm:5      .text:00000000 DoUndef
+   ../saltoExcep.asm:9      .text:00000008 DoDabort
+                            .text:00000000 $d
+   ../saltoExcep.asm:6      .text:00000004 $a
+   ../saltoExcep.asm:13     .text:00000014 $d
+                   .debug_aranges:0000000c $d
+
+NO UNDEFINED SYMBOLS

@@ -1,0 +1,307 @@
+   1              		.cpu arm7tdmi
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 6
+  10              		.eabi_attribute 18, 4
+  11              		.file	"debugStack.c"
+  21              	.Ltext0:
+  22              		.file 1 "../debugStack.c"
+ 2818              		.align	2
+ 2821              	cima_pila:
+ 2822 0000 00EF7F0C 		.word	209710848
+ 2823              		.global	cima_tratados
+ 2824              		.align	2
+ 2827              	cima_tratados:
+ 2828 0004 00EF7F0C 		.word	209710848
+ 2829              		.global	final_pila
+ 2830              		.align	2
+ 2833              	final_pila:
+ 2834 0008 00F07F0C 		.word	209711104
+ 2835              		.text
+ 2836              		.align	2
+ 2837              		.global	push_debug
+ 2839              	push_debug:
+ 2840              	.LFB0:
+   1:../debugStack.c **** #include "44b.h"
+   2:../debugStack.c **** #include "stdint.h"
+   3:../debugStack.c **** #include "timer2.h"
+   4:../debugStack.c **** #include <math.h>
+   5:../debugStack.c **** 
+   6:../debugStack.c **** // La primera pila es la pilas de usuario y se define(como el resto) en 44binit.asm
+   7:../debugStack.c **** // .equ 	UserStack,	_ISR_STARTADDRESS-0xf00    		/* c7ff000 */
+   8:../debugStack.c **** 
+   9:../debugStack.c **** #define DebugStack (_ISR_STARTADDRESS - 0xf00 - 256);
+  10:../debugStack.c **** 
+  11:../debugStack.c **** 
+  12:../debugStack.c **** uint32_t* cima_pila = DebugStack;
+  13:../debugStack.c **** uint32_t* cima_tratados = DebugStack;
+  14:../debugStack.c **** 
+  15:../debugStack.c **** uint32_t* final_pila = _ISR_STARTADDRESS-0xf00;
+  16:../debugStack.c **** 
+  17:../debugStack.c **** 
+  18:../debugStack.c **** void push_debug(int ID_evento, int aux_data);
+  19:../debugStack.c **** 
+  20:../debugStack.c **** void push_debug(int ID_evento, int aux_data){
+ 2841              		.loc 1 20 0
+ 2842              		.cfi_startproc
+ 2843              		@ Function supports interworking.
+ 2844              		@ args = 0, pretend = 0, frame = 16
+ 2845              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2846 0000 0DC0A0E1 		mov	ip, sp
+ 2847              	.LCFI0:
+ 2848              		.cfi_def_cfa_register 12
+ 2849 0004 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 2850 0008 04B04CE2 		sub	fp, ip, #4
+ 2851              		.cfi_offset 14, -8
+ 2852              		.cfi_offset 13, -12
+ 2853              		.cfi_offset 11, -16
+ 2854              	.LCFI1:
+ 2855              		.cfi_def_cfa 11, 4
+ 2856 000c 10D04DE2 		sub	sp, sp, #16
+ 2857 0010 18000BE5 		str	r0, [fp, #-24]
+ 2858 0014 1C100BE5 		str	r1, [fp, #-28]
+  21:../debugStack.c **** 	int tiempo = timer2_leer(); 		//leemos el valor del timer
+ 2859              		.loc 1 21 0
+ 2860 0018 FEFFFFEB 		bl	timer2_leer
+ 2861 001c 0030A0E1 		mov	r3, r0
+ 2862 0020 10300BE5 		str	r3, [fp, #-16]
+  22:../debugStack.c **** 
+  23:../debugStack.c **** 	if (cima_pila + 2 == final_pila){
+ 2863              		.loc 1 23 0
+ 2864 0024 88309FE5 		ldr	r3, .L3
+ 2865 0028 003093E5 		ldr	r3, [r3, #0]
+ 2866 002c 082083E2 		add	r2, r3, #8
+ 2867 0030 80309FE5 		ldr	r3, .L3+4
+ 2868 0034 003093E5 		ldr	r3, [r3, #0]
+ 2869 0038 030052E1 		cmp	r2, r3
+ 2870 003c 0200001A 		bne	.L2
+  24:../debugStack.c **** 		cima_pila = DebugStack;
+ 2871              		.loc 1 24 0
+ 2872 0040 6C309FE5 		ldr	r3, .L3
+ 2873 0044 70209FE5 		ldr	r2, .L3+8
+ 2874 0048 002083E5 		str	r2, [r3, #0]
+ 2875              	.L2:
+  25:../debugStack.c **** 	}
+  26:../debugStack.c **** 
+  27:../debugStack.c **** 	int dato = concatenar_parametros(ID_evento, aux_data, 24);
+ 2876              		.loc 1 27 0
+ 2877 004c 18001BE5 		ldr	r0, [fp, #-24]
+ 2878 0050 1C101BE5 		ldr	r1, [fp, #-28]
+ 2879 0054 1820A0E3 		mov	r2, #24
+ 2880 0058 FEFFFFEB 		bl	concatenar_parametros
+ 2881 005c 14000BE5 		str	r0, [fp, #-20]
+  28:../debugStack.c **** 	*cima_pila = dato; 				//apilamos ID_evento
+ 2882              		.loc 1 28 0
+ 2883 0060 4C309FE5 		ldr	r3, .L3
+ 2884 0064 003093E5 		ldr	r3, [r3, #0]
+ 2885 0068 14201BE5 		ldr	r2, [fp, #-20]
+ 2886 006c 002083E5 		str	r2, [r3, #0]
+  29:../debugStack.c **** 	cima_pila = cima_pila + 1; 		//movemos el stack pointer
+ 2887              		.loc 1 29 0
+ 2888 0070 3C309FE5 		ldr	r3, .L3
+ 2889 0074 003093E5 		ldr	r3, [r3, #0]
+ 2890 0078 042083E2 		add	r2, r3, #4
+ 2891 007c 30309FE5 		ldr	r3, .L3
+ 2892 0080 002083E5 		str	r2, [r3, #0]
+  30:../debugStack.c **** 	*cima_pila = tiempo; 			//apilamos el tiempo
+ 2893              		.loc 1 30 0
+ 2894 0084 28309FE5 		ldr	r3, .L3
+ 2895 0088 003093E5 		ldr	r3, [r3, #0]
+ 2896 008c 10201BE5 		ldr	r2, [fp, #-16]
+ 2897 0090 002083E5 		str	r2, [r3, #0]
+  31:../debugStack.c **** 	cima_pila = cima_pila + 1; 		//movemos stack pointer
+ 2898              		.loc 1 31 0
+ 2899 0094 18309FE5 		ldr	r3, .L3
+ 2900 0098 003093E5 		ldr	r3, [r3, #0]
+ 2901 009c 042083E2 		add	r2, r3, #4
+ 2902 00a0 0C309FE5 		ldr	r3, .L3
+ 2903 00a4 002083E5 		str	r2, [r3, #0]
+  32:../debugStack.c **** }
+ 2904              		.loc 1 32 0
+ 2905 00a8 0CD04BE2 		sub	sp, fp, #12
+ 2906 00ac 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 2907 00b0 1EFF2FE1 		bx	lr
+ 2908              	.L4:
+ 2909              		.align	2
+ 2910              	.L3:
+ 2911 00b4 00000000 		.word	cima_pila
+ 2912 00b8 00000000 		.word	final_pila
+ 2913 00bc 00EF7F0C 		.word	209710848
+ 2914              		.cfi_endproc
+ 2915              	.LFE0:
+ 2917              		.align	2
+ 2918              		.global	hayEventos
+ 2920              	hayEventos:
+ 2921              	.LFB1:
+  33:../debugStack.c **** 
+  34:../debugStack.c **** int hayEventos(){
+ 2922              		.loc 1 34 0
+ 2923              		.cfi_startproc
+ 2924              		@ Function supports interworking.
+ 2925              		@ args = 0, pretend = 0, frame = 0
+ 2926              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2927 00c0 0DC0A0E1 		mov	ip, sp
+ 2928              	.LCFI2:
+ 2929              		.cfi_def_cfa_register 12
+ 2930 00c4 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 2931 00c8 04B04CE2 		sub	fp, ip, #4
+ 2932              		.cfi_offset 14, -8
+ 2933              		.cfi_offset 13, -12
+ 2934              		.cfi_offset 11, -16
+ 2935              	.LCFI3:
+ 2936              		.cfi_def_cfa 11, 4
+  35:../debugStack.c **** 	return cima_pila != cima_tratados;
+ 2937              		.loc 1 35 0
+ 2938 00cc 24309FE5 		ldr	r3, .L6
+ 2939 00d0 002093E5 		ldr	r2, [r3, #0]
+ 2940 00d4 20309FE5 		ldr	r3, .L6+4
+ 2941 00d8 003093E5 		ldr	r3, [r3, #0]
+ 2942 00dc 030052E1 		cmp	r2, r3
+ 2943 00e0 0030A003 		moveq	r3, #0
+ 2944 00e4 0130A013 		movne	r3, #1
+  36:../debugStack.c **** }
+ 2945              		.loc 1 36 0
+ 2946 00e8 0300A0E1 		mov	r0, r3
+ 2947 00ec 0CD04BE2 		sub	sp, fp, #12
+ 2948 00f0 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 2949 00f4 1EFF2FE1 		bx	lr
+ 2950              	.L7:
+ 2951              		.align	2
+ 2952              	.L6:
+ 2953 00f8 00000000 		.word	cima_pila
+ 2954 00fc 00000000 		.word	cima_tratados
+ 2955              		.cfi_endproc
+ 2956              	.LFE1:
+ 2958              		.align	2
+ 2959              		.global	tratarEvento
+ 2961              	tratarEvento:
+ 2962              	.LFB2:
+  37:../debugStack.c **** void tratarEvento(){
+ 2963              		.loc 1 37 0
+ 2964              		.cfi_startproc
+ 2965              		@ Function supports interworking.
+ 2966              		@ args = 0, pretend = 0, frame = 0
+ 2967              		@ frame_needed = 1, uses_anonymous_args = 0
+ 2968 0100 0DC0A0E1 		mov	ip, sp
+ 2969              	.LCFI4:
+ 2970              		.cfi_def_cfa_register 12
+ 2971 0104 00D82DE9 		stmfd	sp!, {fp, ip, lr, pc}
+ 2972 0108 04B04CE2 		sub	fp, ip, #4
+ 2973              		.cfi_offset 14, -8
+ 2974              		.cfi_offset 13, -12
+ 2975              		.cfi_offset 11, -16
+ 2976              	.LCFI5:
+ 2977              		.cfi_def_cfa 11, 4
+  38:../debugStack.c **** 	cima_tratados += 2;
+ 2978              		.loc 1 38 0
+ 2979 010c 18309FE5 		ldr	r3, .L9
+ 2980 0110 003093E5 		ldr	r3, [r3, #0]
+ 2981 0114 082083E2 		add	r2, r3, #8
+ 2982 0118 0C309FE5 		ldr	r3, .L9
+ 2983 011c 002083E5 		str	r2, [r3, #0]
+  39:../debugStack.c **** }
+ 2984              		.loc 1 39 0
+ 2985 0120 0CD04BE2 		sub	sp, fp, #12
+ 2986 0124 00689DE8 		ldmfd	sp, {fp, sp, lr}
+ 2987 0128 1EFF2FE1 		bx	lr
+ 2988              	.L10:
+ 2989              		.align	2
+ 2990              	.L9:
+ 2991 012c 00000000 		.word	cima_tratados
+ 2992              		.cfi_endproc
+ 2993              	.LFE2:
+ 2995              		.align	2
+ 2996              		.global	concatenar_parametros
+ 2998              	concatenar_parametros:
+ 2999              	.LFB3:
+  40:../debugStack.c **** int concatenar_parametros(int a, int b, int tamano_b){
+ 3000              		.loc 1 40 0
+ 3001              		.cfi_startproc
+ 3002              		@ Function supports interworking.
+ 3003              		@ args = 0, pretend = 0, frame = 40
+ 3004              		@ frame_needed = 1, uses_anonymous_args = 0
+ 3005 0130 0DC0A0E1 		mov	ip, sp
+ 3006              	.LCFI6:
+ 3007              		.cfi_def_cfa_register 12
+ 3008 0134 10D82DE9 		stmfd	sp!, {r4, fp, ip, lr, pc}
+ 3009 0138 04B04CE2 		sub	fp, ip, #4
+ 3010              		.cfi_offset 14, -8
+ 3011              		.cfi_offset 13, -12
+ 3012              		.cfi_offset 11, -16
+ 3013              		.cfi_offset 4, -20
+ 3014              	.LCFI7:
+ 3015              		.cfi_def_cfa 11, 4
+ 3016 013c 2CD04DE2 		sub	sp, sp, #44
+ 3017 0140 30000BE5 		str	r0, [fp, #-48]
+ 3018 0144 34100BE5 		str	r1, [fp, #-52]
+ 3019 0148 38200BE5 		str	r2, [fp, #-56]
+  41:../debugStack.c **** 	double result = 1;
+ 3020              		.loc 1 41 0
+ 3021 014c 0030A0E3 		mov	r3, #0
+ 3022 0150 FF45A0E3 		mov	r4, #1069547520
+ 3023 0154 034684E2 		add	r4, r4, #3145728
+ 3024 0158 1C300BE5 		str	r3, [fp, #-28]
+ 3025 015c 18400BE5 		str	r4, [fp, #-24]
+  42:../debugStack.c **** 	double base = 10;
+ 3026              		.loc 1 42 0
+ 3027 0160 0030A0E3 		mov	r3, #0
+ 3028 0164 0141A0E3 		mov	r4, #1073741824
+ 3029 0168 094784E2 		add	r4, r4, #2359296
+ 3030 016c 24300BE5 		str	r3, [fp, #-36]
+ 3031 0170 20400BE5 		str	r4, [fp, #-32]
+  43:../debugStack.c **** 	double power = 1;
+ 3032              		.loc 1 43 0
+ 3033 0174 0030A0E3 		mov	r3, #0
+ 3034 0178 FF45A0E3 		mov	r4, #1069547520
+ 3035 017c 034684E2 		add	r4, r4, #3145728
+ 3036 0180 2C300BE5 		str	r3, [fp, #-44]
+ 3037 0184 28400BE5 		str	r4, [fp, #-40]
+  44:../debugStack.c **** 	result = pow(base,power);
+ 3038              		.loc 1 44 0
+ 3039 0188 24104BE2 		sub	r1, fp, #36
+ 3040 018c 030091E8 		ldmia	r1, {r0-r1}
+ 3041 0190 2C304BE2 		sub	r3, fp, #44
+ 3042 0194 0C0093E8 		ldmia	r3, {r2-r3}
+ 3043 0198 FEFFFFEB 		bl	pow
+ 3044 019c 0030A0E1 		mov	r3, r0
+ 3045 01a0 0140A0E1 		mov	r4, r1
+ 3046 01a4 1C300BE5 		str	r3, [fp, #-28]
+ 3047 01a8 18400BE5 		str	r4, [fp, #-24]
+  45:../debugStack.c **** 	//return (a * pow(10, tamano_b) + b);
+  46:../debugStack.c **** }
+ 3048              		.loc 1 46 0
+ 3049 01ac 0300A0E1 		mov	r0, r3
+ 3050 01b0 10D04BE2 		sub	sp, fp, #16
+ 3051 01b4 10689DE8 		ldmfd	sp, {r4, fp, sp, lr}
+ 3052 01b8 1EFF2FE1 		bx	lr
+ 3053              		.cfi_endproc
+ 3054              	.LFE3:
+ 3056              	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 debugStack.c
+                            *COM*:00000004 switch_leds
+C:\Users\a764429\AppData\Local\Temp\ccN9dlW9.s:2821   .data:00000000 cima_pila
+C:\Users\a764429\AppData\Local\Temp\ccN9dlW9.s:2818   .data:00000000 $d
+C:\Users\a764429\AppData\Local\Temp\ccN9dlW9.s:2827   .data:00000004 cima_tratados
+C:\Users\a764429\AppData\Local\Temp\ccN9dlW9.s:2833   .data:00000008 final_pila
+C:\Users\a764429\AppData\Local\Temp\ccN9dlW9.s:2836   .text:00000000 $a
+C:\Users\a764429\AppData\Local\Temp\ccN9dlW9.s:2839   .text:00000000 push_debug
+C:\Users\a764429\AppData\Local\Temp\ccN9dlW9.s:2998   .text:00000130 concatenar_parametros
+C:\Users\a764429\AppData\Local\Temp\ccN9dlW9.s:2911   .text:000000b4 $d
+C:\Users\a764429\AppData\Local\Temp\ccN9dlW9.s:2917   .text:000000c0 $a
+C:\Users\a764429\AppData\Local\Temp\ccN9dlW9.s:2920   .text:000000c0 hayEventos
+C:\Users\a764429\AppData\Local\Temp\ccN9dlW9.s:2953   .text:000000f8 $d
+C:\Users\a764429\AppData\Local\Temp\ccN9dlW9.s:2958   .text:00000100 $a
+C:\Users\a764429\AppData\Local\Temp\ccN9dlW9.s:2961   .text:00000100 tratarEvento
+C:\Users\a764429\AppData\Local\Temp\ccN9dlW9.s:2991   .text:0000012c $d
+C:\Users\a764429\AppData\Local\Temp\ccN9dlW9.s:2995   .text:00000130 $a
+                     .debug_frame:00000010 $d
+
+UNDEFINED SYMBOLS
+timer2_leer
+pow

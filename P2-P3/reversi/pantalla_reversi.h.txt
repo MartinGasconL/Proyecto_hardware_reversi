@@ -1,0 +1,17 @@
+#include "stdint.h"
+#include "lcd.h"
+
+void mostrar_pantalla_inicial();
+void mostrar_pantalla_seleccion();
+void mostrar_pantalla_final(int color_ganador);
+void screen_init();
+void mostrar_info(uint8_t tiempo, uint8_t tiempo_patron_volteo,
+		uint8_t accesos_patron_volteo, uint8_t fila, uint8_t columna, int flush);
+
+void test_pantalla();
+void actualizar_tiempo(int tiempo_partida, int flush);
+void mostrar_profiling(int tiempo_patron_volteo, int accesos_patron_volteo, int flush);
+void mover_ficha_seleccion(int fila, int columna, int fila_antigua, int columna_antigua);
+
+void actualizar_tablero_pantalla();
+void realizar_trabajo_encolado();

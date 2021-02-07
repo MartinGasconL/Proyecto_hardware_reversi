@@ -1,0 +1,12 @@
+.global generar_abort
+.extern HandlerDabort
+.global generar_swi
+
+.arm
+generar_abort:
+	PUSH {r0}
+	ldr r0,=0x00000003
+	str r0,[r0]
+generar_swi:
+	SWI 0
+

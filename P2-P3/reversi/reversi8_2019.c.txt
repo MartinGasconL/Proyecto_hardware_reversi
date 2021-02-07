@@ -1,0 +1,977 @@
+
+// Tamaño del tablero
+
+// Valores que puede devolver la función patron_volteo())
+#include "reversi8_2019.h"
+#include "stdint.h"
+#include "timer.h"
+#include "timer2.h"
+#include "boton_antirebotes.h"
+#include "debug_stack.h"
+#include "controlador_latido.h"
+#include "8led.h"
+#include "led.h"
+#include "44blib.h"
+#include "jugada_por_botones.h"
+#include "jugada_por_pantalla.h"
+#include "pantalla_reversi.h"
+
+//////////////////////////////////////////////////////////////////////////////////////
+// Variables globales que no deberían serlo
+// tablero, fila, columna y ready son varibles que se deberían definir como locales dentro de reversi8.
+// Sin embargo, las hemos definido como globales para que sea más fácil visualizar el tablero y las variables en la memoria
+//////////////////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////
+// Tablero sin inicializar
+////////////////////////////////////////////////////////////////////
+uint8_t __attribute__ ((aligned (8))) tablero[DIM][DIM];
+
+uint8_t __attribute__ ((aligned (8))) candidatas[DIM][DIM];
+int blancas, negras; // número de fichas de cada color
+
+int existe_jugada();
+int partida_terminada(int *ganador);
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// 0 indica CASILLA_VACIA, 1 indica FICHA_BLANCA y 2 indica FICHA_NEGRA
+// pone el tablero a cero y luego coloca las fichas centrales.
+void __attribute__((optimize("O0"))) init_table(uint8_t tablero[][DIM])
+{
+    int i, j;
+
+    for (i = 0; i < DIM; i++)
+    {
+        for (j = 0; j < DIM; j++)
+            tablero[i][j] = CASILLA_VACIA;
+        	candidatas[i][j] = NO;
+        if(tablero[i][i] == 1111){
+        	tablero[i][i] = 0;
+        }
+    }
+
+
+#if 0
+    for (i = 3; i < 5; ++i) {
+	for(j = 3; j < 5; ++j) {
+	    tablero[i][j] = i == j ? FICHA_BLANCA : FICHA_NEGRA;
+	}
+    }
+
+    for (i = 2; i < 6; ++i) {
+	for (j = 2; j < 6; ++j) {
+	    if((i>=3) && (i < 5) && (j>=3) && (j<5)) {
+		candidatas[i][j] = CASILLA_OCUPADA;
+	    } else {
+		candidatas[i][j] = SI; //CASILLA_LIBRE;
+	    }
+	}
+    }
+#endif
+    // arriba hay versión alternativa
+    tablero[3][3] = FICHA_BLANCA;
+    tablero[4][4] = FICHA_BLANCA;
+    tablero[3][4] = FICHA_NEGRA;
+    tablero[4][3] = FICHA_NEGRA;
+
+    candidatas[3][3] = CASILLA_OCUPADA;
+    candidatas[4][4] = CASILLA_OCUPADA;
+    candidatas[3][4] = CASILLA_OCUPADA;
+    candidatas[4][3] = CASILLA_OCUPADA;
+
+    // casillas a explorar:
+    candidatas[2][2] = SI;
+    candidatas[2][3] = SI;
+    candidatas[2][4] = SI;
+    candidatas[2][5] = SI;
+    candidatas[3][2] = SI;
+    candidatas[3][5] = SI;
+    candidatas[4][2] = SI;
+    candidatas[4][5] = SI;
+    candidatas[5][2] = SI;
+    candidatas[5][3] = SI;
+    candidatas[5][4] = SI;
+    candidatas[5][5] = SI;
+}
+
+
+
+void asignar_celda(int fila, int columna, int color){
+	tablero[fila][columna] = color;
+}
+////////////////////////////////////////////////////////////////////////////////
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+// IMPORTANTE: AL SUSTITUIR FICHA_VALIDA() Y PATRON_VOLTEO()
+// POR RUTINAS EN ENSAMBLADOR HAY QUE RESPETAR LA MODULARIDAD.
+// DEBEN SEGUIR SIENDO LLAMADAS A FUNCIONES Y DEBEN CUMPLIR CON EL ATPCS
+// (VER TRANSPARENCIAS Y MATERIAL DE PRACTICAS):
+//  - DEBEN PASAR LOS PARAMETROS POR LOS REGISTROS CORRESPONDIENTES
+//  - GUARDAR EN PILA SOLO LOS REGISTROS QUE TOCAN
+//  - CREAR UN MARCO DE PILA TAL Y COMO MUESTRAN LAS TRANSPARENCIAS
+//    DE LA ASIGNATURA (CON EL PC, FP, LR,....)
+//  - EN EL CASO DE LAS VARIABLES LOCALES, SOLO HAY QUE APILARLAS
+//    SI NO SE PUEDEN COLOCAR EN UN REGISTRO.
+//    SI SE COLOCAN EN UN REGISTRO NO HACE FALTA
+//    NI GUARDARLAS EN PILA NI RESERVAR UN ESPACIO EN LA PILA PARA ELLAS
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+////////////////////////////////////////////////////////////////////////////////
+
+ // Valida la casilla en la que quiere colocar fichar el jugador.
+uint8_t ficha_valida_juego(uint8_t f, uint8_t c){
+
+    int i;
+    int j;
+    int fila = 0;
+    int columna = 0;
+    if(tablero[f][c] != CASILLA_VACIA)
+            return 0;
+    //Verifica si hay alguna ficha blanca adyacente a la casilla donde se coloca ficha.
+    for(i = -1; i <= 1; i++){
+    	for(j = -1; j <=1; j++){
+            fila = i + f;
+            columna = j + c;
+                if((j != 0 || i != 0) && tablero[fila][columna] == FICHA_BLANCA
+                        && fila > 0 && columna > 0 && fila < DIM && columna < DIM){
+                	//Verfica si se rodea a una ficha blanca entre la ficha a colocar y una negra del tablero.
+                    while(tablero[fila][columna] == FICHA_BLANCA
+                            && fila > 0 && columna > 0 && fila < DIM && columna < DIM){
+                        fila += i;
+                        columna += j;
+                    }
+                    if(tablero[fila][columna] == FICHA_NEGRA)
+                    	return 1;
+    		}
+    	}
+    }
+    return 0;
+}
+
+int posicion_ocupada(int fila, int columna){
+	return tablero[fila][columna] == FICHA_BLANCA ||
+			tablero[fila][columna] == FICHA_NEGRA;
+}
+
+int obtener_ficha_celda(int f, int c){
+	return tablero[f][c];
+}
+// Devuelve el contenido de la posición indicadas por la fila y columna actual.
+// Además informa si la posición es válida y contiene alguna ficha.
+// Esto lo hace por referencia (en *posicion_valida)
+// Si devuelve un 0 no es válida o está vacia.
+uint8_t ficha_valida(uint8_t f, uint8_t c, int *posicion_valida)
+{
+    char ficha;
+
+    // ficha = tablero[f][c];
+    // no puede accederse a tablero[f][c]
+    // ya que algún índice puede ser negativo
+
+    if ((f < DIM) && (f >= 0) && (c < DIM) && (c >= 0) && (tablero[f][c] != CASILLA_VACIA))
+    {
+        *posicion_valida = 1;
+        ficha = tablero[f][c];
+    }
+    else
+    {
+        *posicion_valida = 0;
+        ficha = CASILLA_VACIA;
+    }
+    return ficha;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// La función patrón volteo comprueba si hay que actualizar una determinada direccion,
+// busca el patrón de volteo (n fichas del rival seguidas de una ficha del jugador actual)
+// en una dirección determinada
+// SF y SC son las cantidades a sumar para movernos en la dirección que toque
+// color indica el color de la pieza que se acaba de colocar
+// la función devuelve PATRON_ENCONTRADO (1) si encuentra patrón y NO_HAY_PATRON (0) en caso contrario
+// FA y CA son la fila y columna a analizar
+// longitud es un parámetro por referencia. Sirve para saber la longitud del patrón que se está analizando.
+//          Se usa para saber cuantas fichas habría que voltear
+int patron_volteo(uint8_t tablero[][DIM], int *longitud, uint8_t FA, uint8_t CA, int8_t SF, int8_t SC, uint8_t color)
+{
+	int inicio_p_v = timer2_leer();
+	int posicion_valida; // indica si la posición es valida y contiene una ficha de algún jugador
+	uint8_t casilla;   // casilla es la casilla que se lee del tablero
+
+
+
+	FA = FA + SF;
+	CA = CA + SC;
+	casilla = ficha_valida(FA, CA, &posicion_valida);
+	while ((posicion_valida == 1) && (casilla != color))
+	// mientras la casilla está en el tablero, no está vací­a,
+	// y es del color rival seguimos buscando el patron de volteo
+	{
+		FA = FA + SF;
+		CA = CA + SC;
+		*longitud = *longitud + 1;
+		casilla = ficha_valida(FA, CA, &posicion_valida);
+	}
+	tiempo_patron_volteo += (timer2_leer() - inicio_p_v);
+	accesos_patron_volteo++;
+    // si la ultima posición era válida y la ficha es del jugador actual,
+    // entonces hemos encontrado el patrón
+	if ((posicion_valida == 1) && (casilla == color) && (*longitud >0))
+		return PATRON_ENCONTRADO; // si hay que voltear una ficha o más hemos encontrado el patrón
+	else
+		return NO_HAY_PATRON; // si no hay que voltear no hay patrón
+
+}
+////////////////////////////////////////////////////////////////////////////////
+// voltea n fichas en la dirección que toque
+// SF y SC son las cantidades a sumar para movernos en la dirección que toque
+// color indica el color de la pieza que se acaba de colocar
+// FA y CA son la fila y columna a analizar
+void voltear(uint8_t tablero[][DIM], uint8_t FA, uint8_t CA, uint8_t SF, uint8_t SC, int n, uint8_t color)
+{
+    int i;
+
+    for (i = 0; i < n; i++)
+    {
+        FA = FA + SF;
+        CA = CA + SC;
+        asignar_celda(FA, CA, color);
+    }
+}
+////////////////////////////////////////////////////////////////////////////////
+// comprueba si hay que actualizar alguna ficha
+// no comprueba que el movimiento realizado sea válido
+// f y c son la fila y columna a analizar
+// uint8_t vSF[DIM] = {-1,-1, 0, 1, 1, 1, 0,-1};
+// uint8_t vSC[DIM] = { 0, 1, 1, 1, 0,-1,-1,-1};
+int actualizar_tablero(uint8_t tablero[][DIM], uint8_t f, uint8_t c, uint8_t color)
+{
+    uint8_t SF, SC; // cantidades a sumar para movernos en la dirección que toque
+    int i, flip, patron;
+
+    for (i = 0; i < DIM; i++) // 0 es Norte, 1 NE, 2 E ...
+    {
+        SF = vSF[i];
+        SC = vSC[i];
+        // flip: numero de fichas a voltear
+        flip = 0;
+
+        patron = patron_volteo(tablero, &flip, f, c, SF, SC, color);
+        if (patron == PATRON_ENCONTRADO )
+        {
+            voltear(tablero, f, c, SF, SC, flip, color);
+
+        }
+    }
+    return 0;
+}
+
+/////////////////////////////////////////////////////////////////////////////////
+// Recorre el tablero comprobando en cada posición si se puede mover
+// En caso afirmativo, consulta la puntuación de la posición y si es la mejor
+// que se ha encontrado la guarda
+// Al acabar escribe el movimiento seleccionado en f y c
+
+// Candidatas
+// NO    0
+// SI    1
+// CASILLA_OCUPADA 2
+int elegir_mov(uint8_t tablero[][DIM], uint8_t *f, uint8_t *c)
+{
+    int i, j, k, found;
+    int mf = -1; // almacena la fila del mejor movimiento encontrado
+    int mc;      // almacena la columna del mejor movimiento encontrado
+    uint8_t mejor = 0; // almacena el mejor valor encontrado
+    int patron, longitud;
+    uint8_t SF, SC; // cantidades a sumar para movernos en la dirección que toque
+
+    // Recorremos el tablero comprobando dónde podemos mover
+    // Comparamos la puntuación de los movimientos encontrados y nos quedamos con el mejor
+    for (i=0; i<DIM; i++)
+    {
+        for (j=0; j<DIM; j++)
+        {   // indica en qué casillas quizá se pueda mover
+            if (candidatas[i][j] == SI)
+            {
+                if (tablero[i][j] == CASILLA_VACIA)
+                {
+                    found = 0;
+                    k = 0;
+
+                    // en este bucle comprobamos si es un movimiento válido
+                    // (es decir si implica voltear en alguna dirección)
+                    while ((found == 0) && (k < DIM))
+                    {
+                        SF = vSF[k];    // k representa la dirección que miramos
+                        SC = vSC[k];    // 1 es norte, 2 NE, 3 E ...
+
+                        // nos dice qué hay que voltear en cada dirección
+                        longitud = 0;
+                        patron = patron_volteo(tablero, &longitud, i, j, SF, SC, FICHA_BLANCA);
+                        if (patron == PATRON_ENCONTRADO)
+                        {
+                            found = 1;
+                            if (tabla_valor[i][j] > mejor)
+                            {
+                                mf = i;
+                                mc = j;
+                                mejor = tabla_valor[i][j];
+                            }
+                        }
+                        k++;
+                        // si no hemos encontrado nada probamos con la siguiente dirección
+                    }
+                }
+            }
+        }
+    }
+    *f = (uint8_t) mf;
+    *c = (uint8_t) mc;
+    // si no se ha encontrado una posición válida devuelve -1
+    return mf;
+}
+////////////////////////////////////////////////////////////////////////////////
+// Cuenta el número de fichas de cada color.
+// Los guarda en la dirección b (blancas) y n (negras)
+void contar(uint8_t tablero[][DIM], int *b, int *n)
+{
+    int i,j;
+
+    *b = 0;
+    *n = 0;
+
+    // recorremos  el tablero contando las fichas de cada color
+    for (i=0; i<DIM; i++)
+    {
+        for (j=0; j<DIM; j++)
+        {
+            if (tablero[i][j] == FICHA_BLANCA)
+            {
+                (*b)++;
+            }
+            else if (tablero[i][j] == FICHA_NEGRA)
+            {
+                (*n)++;
+            }
+        }
+    }
+}
+
+void actualizar_candidatas(uint8_t f, uint8_t c)
+{
+    // donde ya se ha colocado no se puede volver a colocar
+    // En las posiciones alrededor sí
+    candidatas[f][c] = CASILLA_OCUPADA;
+    if (f > 0)
+    {
+        if (candidatas[f-1][c] != CASILLA_OCUPADA)
+            candidatas[f-1][c] = SI;
+
+        if ((c > 0) && (candidatas[f-1][c-1] != CASILLA_OCUPADA))
+            candidatas[f-1][c-1] = SI;
+
+        if ((c < 7) && (candidatas[f-1][c+1] != CASILLA_OCUPADA))
+            candidatas[f-1][c+1] = SI;
+    }
+    if (f < 7)
+    {
+        if (candidatas[f+1][c] != CASILLA_OCUPADA)
+            candidatas[f+1][c] = SI;
+
+        if ((c > 0) && (candidatas[f+1][c-1] != CASILLA_OCUPADA))
+            candidatas[f+1][c-1] = SI;
+
+        if ((c < 7) && (candidatas[f+1][c+1] != CASILLA_OCUPADA))
+            candidatas[f+1][c+1] = SI;
+    }
+    if ((c > 0) && (candidatas[f][c-1] != CASILLA_OCUPADA))
+        candidatas[f][c-1] = SI;
+
+    if ((c < 7) && (candidatas[f][c+1] != CASILLA_OCUPADA))
+        candidatas[f][c+1] = SI;
+}
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Proceso principal del juego
+// Utiliza el tablero,
+// y las direcciones en las que indica el jugador la fila y la columna
+// y la señal de ready que indica que se han actualizado fila y columna
+// tablero, fila, columna y ready son variables globales aunque deberían ser locales de reversi8,
+// la razón es que al meterlas en la pila no las pone juntas, y así jugar es más complicado.
+// en esta versión el humano lleva negras y la máquina blancas
+// no se comprueba que el humano mueva correctamente.
+// Sólo que la máquina realice un movimiento correcto.
+void reversi8()
+{
+
+	 ////////////////////////////////////////////////////////////////////
+	 // Tablero candidatas: se usa para no explorar todas las posiciones del tablero
+	// sólo se exploran las que están alrededor de las fichas colocadas
+	 ////////////////////////////////////////////////////////////////////
+    init_table(tablero);
+    init_cola();
+    tiempo_partida = 0;
+	accesos_patron_volteo = 0;
+	tiempo_patron_volteo = 0;
+
+    //test();
+	//analisis_tiempos();
+
+}
+
+//Realiza la jugada deseada por el usuario en caso de que sea valida.
+int jugada_usuario(uint8_t fi, uint8_t co){
+	 // si la fila o columna son 8 asumimos que el jugador no puede mover
+	if (((fi) != DIM) && ((co) != DIM) && ficha_valida_juego(fi, co))
+	{
+		asignar_celda(fi,co, FICHA_NEGRA);
+		actualizar_tablero(tablero, fi, co, FICHA_NEGRA);
+		actualizar_candidatas(fi, co);
+		return 1;
+	}
+
+	return 0;
+}
+
+//Realiza la jugada correspondiente a la maquina.
+int jugada_maquina(){
+	uint8_t f = 0;
+	uint8_t c = 0;
+	int done = elegir_mov(tablero, &f, &c);
+	if (done == -1)
+            return 0;
+	else
+	{
+		asignar_celda(f,c,FICHA_BLANCA);
+		actualizar_tablero(tablero, f, c, FICHA_BLANCA);
+		actualizar_candidatas(f, c);
+		push_debug(EVENTO_JUGADA,1);
+		return 1;
+	}
+}
+
+
+void jugar(uint8_t fi, uint8_t co){
+	tiempo_patron_volteo = 0;
+	accesos_patron_volteo = 0;
+	if(!existe_jugada()){
+		if(!jugada_maquina()){										//ninguno puede mover
+			contar(tablero, &blancas, &negras);
+			if(blancas < negras){
+				evento_pantalla_producido(EVENTO_GANAN_NEGRAS);
+			}else{
+				evento_pantalla_producido(EVENTO_GANAN_BLANCAS);
+			}
+		}
+	} else {
+		jugada_usuario(fi, co);										//Usuario puede mover
+		jugada_maquina();
+	}
+
+	int ganador;
+	if(partida_terminada(&ganador)){
+		if(ganador == FICHA_BLANCA){
+			evento_pantalla_producido(EVENTO_GANAN_BLANCAS);
+		}else{
+			evento_pantalla_producido(EVENTO_GANAN_NEGRAS);
+		}
+	} else {
+		actualizar_tablero_pantalla();
+		mostrar_profiling(tiempo_patron_volteo, accesos_patron_volteo, 1);
+
+	}
+}
+
+int existe_jugada(){
+	int i;
+	int j;
+	for(i = 0; i < DIM; i++){
+		for(j = 0; j < DIM; j++)
+			if (ficha_valida_juego(i, j))
+				return 1;
+	}
+	return 0;
+}
+
+
+//Obtiene los tiempos que les cuesta a las diferentes implementaciones de la función patron_volteo.
+void analisis_tiempos(){
+	    int longitud = 0;
+		volatile int lectura_c_c = 0;
+		volatile int lectura_arm_c = 0;
+		volatile int lectura_arm_arm = 0;
+	    int i = 0;
+		timer2_inicializar();
+		timer2_empezar();
+		for (i = 0; i < DIM; i++){
+		        int SF = vSF[i];
+		        int SC = vSC[i];
+		        int patron = patron_volteo(tablero, &longitud, 2, 3, SF, SC, FICHA_NEGRA);
+		}
+
+		lectura_c_c = timer2_parar();
+		Delay(lectura_c_c);
+
+		timer2_inicializar();
+		timer2_empezar();
+		for (i = 0; i < DIM; i++){
+				int SF = vSF[i];
+				int SC = vSC[i];
+				int patron = patron_volteo_arm_c(tablero, &longitud, 2, 3, SF, SC, FICHA_NEGRA);
+		}
+		lectura_arm_c = timer2_parar();
+		Delay(lectura_arm_c);
+
+		timer2_inicializar();
+		timer2_empezar();
+		for (i = 0; i < DIM; i++){
+				int SF = vSF[i];
+				int SC = vSC[i];
+				int patron = patron_volteo_arm_arm(tablero, &longitud, 2, 3, SF, SC, FICHA_NEGRA);
+		}
+		lectura_arm_arm = timer2_parar();
+		Delay(lectura_arm_arm);
+
+}
+
+// retorna 1 si hay eventos esperando a ser atendidos
+int hay_eventos_encolados(){
+	return hayEventos();
+}
+
+
+void dormir_procesador(){
+	//Delay(10);
+}
+
+
+void reversi_main(){
+	reversi8();
+	while (1) {
+		int id_evento;
+		while (hay_eventos_encolados()) {
+			id_evento = tratar_evento();
+			switch(id_evento){
+				case EVENTO_ENCENDER_LATIDO:
+				case EVENTO_APAGAR_LATIDO:
+					latido_encender(id_evento);
+					break;
+				case EVENTO_SEGUNDO:
+					tiempo_partida++;
+					actualizar_tiempo(tiempo_partida, 1);
+					break;
+				case EVENTO_PULSACION_TACTIL:
+				case EVENTO_IZ_BOTON_SOLTADO:
+				case EVENTO_DR_BOTON_SOLTADO:
+				case EVENTO_JUGADA:
+						evento_pantalla_producido(id_evento);
+					break;
+				case EVENTO_TICK_TIMER1:
+					button_ev_tick1();
+					break;
+				case EVENTO_FINLCD:
+					realizar_trabajo_encolado();
+					break;
+
+			}
+		}
+		dormir_procesador();
+	}
+}
+
+//Valida si todas las funciones de patron_volteo funcionan de forma correcta.
+int test_patron_volteo(){
+	uint8_t __attribute__ ((aligned (8))) escenario_pruebas[DIM][DIM] = {
+		        {CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA},
+		        {CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA},
+		        {CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,/**/FICHA_BLANCA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA},
+		        {CASILLA_VACIA,CASILLA_VACIA,/**/FICHA_NEGRA,/**/FICHA_NEGRA,/**/FICHA_BLANCA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA},
+		        {CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,/**/FICHA_NEGRA,/**/FICHA_BLANCA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA},
+		        {CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,/**/FICHA_NEGRA,/**/FICHA_BLANCA,CASILLA_VACIA,CASILLA_VACIA},
+		        {CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA},
+		        {CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA,CASILLA_VACIA}
+		    };
+
+	enum { NUM_JUGADAS=8 };
+
+	const uint8_t fila_jugada[NUM_JUGADAS] = 	{1, 2, 3, 6, 6, 5, 3, 2 };
+	uint8_t columnas_jugada[NUM_JUGADAS] = 	{4, 5, 5, 6, 4, 2, 1, 2 };
+	uint8_t colores[NUM_JUGADAS] = {FICHA_NEGRA, FICHA_NEGRA, FICHA_NEGRA, FICHA_NEGRA, FICHA_BLANCA, FICHA_BLANCA, FICHA_BLANCA, FICHA_BLANCA};
+
+
+	int longitud = 0;
+	int i = 0;
+	int j = 0;
+	int resultado = 0;
+	int resultado_arm = 0;
+	int resultado_arm_c = 0;
+
+	for(i = 0; i < NUM_JUGADAS; i++){
+		for(j = 0; j < DIM; j++){
+			longitud = 0;
+			resultado = patron_volteo(escenario_pruebas, &longitud, fila_jugada[i], columnas_jugada[i], vSF[j], vSC[j], colores[i]);
+			longitud = 0;
+			resultado_arm_c = patron_volteo_arm_c(escenario_pruebas, &longitud, fila_jugada[i], columnas_jugada[i], vSF[j], vSC[j], colores[i]);
+			longitud = 0;
+			resultado_arm = patron_volteo_arm_arm(escenario_pruebas, &longitud, fila_jugada[i], columnas_jugada[i], vSF[j], vSC[j], colores[i]);
+			if(resultado != resultado_arm_c|| resultado != resultado_arm){
+				return 0;
+			}
+		}
+	}
+	return 1;
+}
+
+int partida_terminada(int *ganador){
+	int b, n;
+	contar(tablero, &b, &n);
+	if(b + n == DIM*DIM || n == 0|| b == 0){
+		if(b > n || n == 0){
+			*ganador = FICHA_BLANCA;
+		}else if (b < n || b == 0){
+			*ganador = FICHA_NEGRA;
+		}
+		return 1;
+	}
+	return 0;
+}
+
+
+//Comprueba el correcto funcionamiento del sistema realizado verificaciones sobre una bateria de jugadas correctas.
+int test(){
+	uint8_t tableros_resueltos[NUM_JUGADAS][DIM][DIM];
+	uint8_t fila_jugadas[] = {2, 3, 1, 3};
+	uint8_t columna_jugadas[]={3, 2, 5, 5};
+
+
+	obtener_tableros_resueltos(tableros_resueltos);
+
+	int i = 0;
+	for(i = 0; i < NUM_JUGADAS; i++){
+		jugar(fila_jugadas[i], columna_jugadas[i]);
+		if (tableros_iguales(tablero, tableros_resueltos, i) == 0){
+			while(1);
+		}
+	}
+	return 1;
+}
+
+//Retorna verdadero si un tableros es igual a otro tablero resuelto pasado como parametro
+int tableros_iguales(uint8_t tablero[DIM][DIM], uint8_t tableros_resueltos[4][DIM][DIM], int indice){
+	int i, j;
+	for(i = 0; i < DIM; i++)
+		for(j = 0; j < DIM; j++)
+			if(tablero[i][j] != tableros_resueltos[indice][i][j]){
+				return 0;
+			}
+	return 1;
+}
+
+
+
+//Genera los tableros correctos correspondientes a 4 jugadas
+void obtener_tableros_resueltos(uint8_t tableros_resueltos[4][8][8]){
+	/*RESULTADO 1*/
+
+
+	tableros_resueltos[0][0][0] = 0;
+	tableros_resueltos[0][0][1] = 0;
+	tableros_resueltos[0][0][2] = 0;
+	tableros_resueltos[0][0][3] = 0;
+	tableros_resueltos[0][0][4] = 0;
+	tableros_resueltos[0][0][5] = 0;
+	tableros_resueltos[0][0][6] = 0;
+	tableros_resueltos[0][0][7] = 0;
+
+	tableros_resueltos[0][1][0] = 0;
+	tableros_resueltos[0][1][1] = 0;
+	tableros_resueltos[0][1][2] = 0;
+	tableros_resueltos[0][1][3] = 0;
+	tableros_resueltos[0][1][4] = 0;
+	tableros_resueltos[0][1][5] = 0;
+	tableros_resueltos[0][1][6] = 0;
+	tableros_resueltos[0][1][7] = 0;
+
+	tableros_resueltos[0][2][0] = 0;
+	tableros_resueltos[0][2][1] = 0;
+	tableros_resueltos[0][2][2] = 1;
+	tableros_resueltos[0][2][3] = 2;
+	tableros_resueltos[0][2][4] = 0;
+	tableros_resueltos[0][2][5] = 0;
+	tableros_resueltos[0][2][6] = 0;
+	tableros_resueltos[0][2][7] = 0;
+
+
+	tableros_resueltos[0][3][0] = 0;
+	tableros_resueltos[0][3][1] = 0;
+	tableros_resueltos[0][3][2] = 0;
+	tableros_resueltos[0][3][3] = 1;
+	tableros_resueltos[0][3][4] = 2;
+	tableros_resueltos[0][3][5] = 0;
+	tableros_resueltos[0][3][6] = 0;
+	tableros_resueltos[0][3][7] = 0;
+
+	tableros_resueltos[0][4][0] = 0;
+	tableros_resueltos[0][4][1] = 0;
+	tableros_resueltos[0][4][2] = 0;
+	tableros_resueltos[0][4][3] = 2;
+	tableros_resueltos[0][4][4] = 1;
+	tableros_resueltos[0][4][5] = 0;
+	tableros_resueltos[0][4][6] = 0;
+	tableros_resueltos[0][4][7] = 0;
+
+	tableros_resueltos[0][5][0] = 0;
+	tableros_resueltos[0][5][1] = 0;
+	tableros_resueltos[0][5][2] = 0;
+	tableros_resueltos[0][5][3] = 0;
+	tableros_resueltos[0][5][4] = 0;
+	tableros_resueltos[0][5][5] = 0;
+	tableros_resueltos[0][5][6] = 0;
+	tableros_resueltos[0][5][7] = 0;
+
+	tableros_resueltos[0][6][0] = 0;
+	tableros_resueltos[0][6][1] = 0;
+	tableros_resueltos[0][6][2] = 0;
+	tableros_resueltos[0][6][3] = 0;
+	tableros_resueltos[0][6][4] = 0;
+	tableros_resueltos[0][6][5] = 0;
+	tableros_resueltos[0][6][6] = 0;
+	tableros_resueltos[0][6][7] = 0;
+
+	tableros_resueltos[0][7][0] = 0;
+	tableros_resueltos[0][7][1] = 0;
+	tableros_resueltos[0][7][2] = 0;
+	tableros_resueltos[0][7][3] = 0;
+	tableros_resueltos[0][7][4] = 0;
+	tableros_resueltos[0][7][5] = 0;
+	tableros_resueltos[0][7][6] = 0;
+	tableros_resueltos[0][7][7] = 0;
+
+	/*RESULTADO 2*/
+
+	tableros_resueltos[1][0][0] = 0;
+	tableros_resueltos[1][0][1] = 0;
+	tableros_resueltos[1][0][2] = 0;
+	tableros_resueltos[1][0][3] = 0;
+	tableros_resueltos[1][0][4] = 0;
+	tableros_resueltos[1][0][5] = 0;
+	tableros_resueltos[1][0][6] = 0;
+	tableros_resueltos[1][0][7] = 0;
+
+	tableros_resueltos[1][1][0] = 0;
+	tableros_resueltos[1][1][1] = 0;
+	tableros_resueltos[1][1][2] = 0;
+	tableros_resueltos[1][1][3] = 0;
+	tableros_resueltos[1][1][4] = 0;
+	tableros_resueltos[1][1][5] = 0;
+	tableros_resueltos[1][1][6] = 0;
+	tableros_resueltos[1][1][7] = 0;
+
+	tableros_resueltos[1][2][0] = 0;
+	tableros_resueltos[1][2][1] = 0;
+	tableros_resueltos[1][2][2] = 1;
+	tableros_resueltos[1][2][3] = 1;
+	tableros_resueltos[1][2][4] = 1;
+	tableros_resueltos[1][2][5] = 0;
+	tableros_resueltos[1][2][6] = 0;
+	tableros_resueltos[1][2][7] = 0;
+
+
+	tableros_resueltos[1][3][0] = 0;
+	tableros_resueltos[1][3][1] = 0;
+	tableros_resueltos[1][3][2] = 2;
+	tableros_resueltos[1][3][3] = 2;
+	tableros_resueltos[1][3][4] = 1;
+	tableros_resueltos[1][3][5] = 0;
+	tableros_resueltos[1][3][6] = 0;
+	tableros_resueltos[1][3][7] = 0;
+
+	tableros_resueltos[1][4][0] = 0;
+	tableros_resueltos[1][4][1] = 0;
+	tableros_resueltos[1][4][2] = 0;
+	tableros_resueltos[1][4][3] = 2;
+	tableros_resueltos[1][4][4] = 1;
+	tableros_resueltos[1][4][5] = 0;
+	tableros_resueltos[1][4][6] = 0;
+	tableros_resueltos[1][4][7] = 0;
+
+	tableros_resueltos[1][5][0] = 0;
+	tableros_resueltos[1][5][1] = 0;
+	tableros_resueltos[1][5][2] = 0;
+	tableros_resueltos[1][5][3] = 0;
+	tableros_resueltos[1][5][4] = 0;
+	tableros_resueltos[1][5][5] = 0;
+	tableros_resueltos[1][5][6] = 0;
+	tableros_resueltos[1][5][7] = 0;
+
+	tableros_resueltos[1][6][0] = 0;
+	tableros_resueltos[1][6][1] = 0;
+	tableros_resueltos[1][6][2] = 0;
+	tableros_resueltos[1][6][3] = 0;
+	tableros_resueltos[1][6][4] = 0;
+	tableros_resueltos[1][6][5] = 0;
+	tableros_resueltos[1][6][6] = 0;
+	tableros_resueltos[1][6][7] = 0;
+
+	tableros_resueltos[1][7][0] = 0;
+	tableros_resueltos[1][7][1] = 0;
+	tableros_resueltos[1][7][2] = 0;
+	tableros_resueltos[1][7][3] = 0;
+	tableros_resueltos[1][7][4] = 0;
+	tableros_resueltos[1][7][5] = 0;
+	tableros_resueltos[1][7][6] = 0;
+	tableros_resueltos[1][7][7] = 0;
+
+
+	/*RESULTADO 3*/
+
+	tableros_resueltos[2][0][0] = 0;
+	tableros_resueltos[2][0][1] = 0;
+	tableros_resueltos[2][0][2] = 0;
+	tableros_resueltos[2][0][3] = 0;
+	tableros_resueltos[2][0][4] = 0;
+	tableros_resueltos[2][0][5] = 0;
+	tableros_resueltos[2][0][6] = 0;
+	tableros_resueltos[2][0][7] = 0;
+
+	tableros_resueltos[2][1][0] = 0;
+	tableros_resueltos[2][1][1] = 0;
+	tableros_resueltos[2][1][2] = 0;
+	tableros_resueltos[2][1][3] = 0;
+	tableros_resueltos[2][1][4] = 0;
+	tableros_resueltos[2][1][5] = 2;
+	tableros_resueltos[2][1][6] = 0;
+	tableros_resueltos[2][1][7] = 0;
+
+	tableros_resueltos[2][2][0] = 0;
+	tableros_resueltos[2][2][1] = 0;
+	tableros_resueltos[2][2][2] = 1;
+	tableros_resueltos[2][2][3] = 1;
+	tableros_resueltos[2][2][4] = 1;
+	tableros_resueltos[2][2][5] = 1;
+	tableros_resueltos[2][2][6] = 0;
+	tableros_resueltos[2][2][7] = 0;
+
+
+	tableros_resueltos[2][3][0] = 0;
+	tableros_resueltos[2][3][1] = 0;
+	tableros_resueltos[2][3][2] = 2;
+	tableros_resueltos[2][3][3] = 2;
+	tableros_resueltos[2][3][4] = 1;
+	tableros_resueltos[2][3][5] = 0;
+	tableros_resueltos[2][3][6] = 0;
+	tableros_resueltos[2][3][7] = 0;
+
+	tableros_resueltos[2][4][0] = 0;
+	tableros_resueltos[2][4][1] = 0;
+	tableros_resueltos[2][4][2] = 0;
+	tableros_resueltos[2][4][3] = 2;
+	tableros_resueltos[2][4][4] = 1;
+	tableros_resueltos[2][4][5] = 0;
+	tableros_resueltos[2][4][6] = 0;
+	tableros_resueltos[2][4][7] = 0;
+
+	tableros_resueltos[2][5][0] = 0;
+	tableros_resueltos[2][5][1] = 0;
+	tableros_resueltos[2][5][2] = 0;
+	tableros_resueltos[2][5][3] = 0;
+	tableros_resueltos[2][5][4] = 0;
+	tableros_resueltos[2][5][5] = 0;
+	tableros_resueltos[2][5][6] = 0;
+	tableros_resueltos[2][5][7] = 0;
+
+	tableros_resueltos[2][6][0] = 0;
+	tableros_resueltos[2][6][1] = 0;
+	tableros_resueltos[2][6][2] = 0;
+	tableros_resueltos[2][6][3] = 0;
+	tableros_resueltos[2][6][4] = 0;
+	tableros_resueltos[2][6][5] = 0;
+	tableros_resueltos[2][6][6] = 0;
+	tableros_resueltos[2][6][7] = 0;
+
+	tableros_resueltos[2][7][0] = 0;
+	tableros_resueltos[2][7][1] = 0;
+	tableros_resueltos[2][7][2] = 0;
+	tableros_resueltos[2][7][3] = 0;
+	tableros_resueltos[2][7][4] = 0;
+	tableros_resueltos[2][7][5] = 0;
+	tableros_resueltos[2][7][6] = 0;
+	tableros_resueltos[2][7][7] = 0;
+
+
+	/*RESULTADO 4*/
+
+	tableros_resueltos[3][0][0] = 0;
+	tableros_resueltos[3][0][1] = 0;
+	tableros_resueltos[3][0][2] = 0;
+	tableros_resueltos[3][0][3] = 0;
+	tableros_resueltos[3][0][4] = 0;
+	tableros_resueltos[3][0][5] = 0;
+	tableros_resueltos[3][0][6] = 0;
+	tableros_resueltos[3][0][7] = 0;
+
+	tableros_resueltos[3][1][0] = 0;
+	tableros_resueltos[3][1][1] = 0;
+	tableros_resueltos[3][1][2] = 0;
+	tableros_resueltos[3][1][3] = 0;
+	tableros_resueltos[3][1][4] = 0;
+	tableros_resueltos[3][1][5] = 2;
+	tableros_resueltos[3][1][6] = 0;
+	tableros_resueltos[3][1][7] = 0;
+
+	tableros_resueltos[3][2][0] = 0;
+	tableros_resueltos[3][2][1] = 0;
+	tableros_resueltos[3][2][2] = 1;
+	tableros_resueltos[3][2][3] = 1;
+	tableros_resueltos[3][2][4] = 1;
+	tableros_resueltos[3][2][5] = 2;
+	tableros_resueltos[3][2][6] = 0;
+	tableros_resueltos[3][2][7] = 0;
+
+
+	tableros_resueltos[3][3][0] = 0;
+	tableros_resueltos[3][3][1] = 0;
+	tableros_resueltos[3][3][2] = 1;
+	tableros_resueltos[3][3][3] = 1;
+	tableros_resueltos[3][3][4] = 2;
+	tableros_resueltos[3][3][5] = 2;
+	tableros_resueltos[3][3][6] = 0;
+	tableros_resueltos[3][3][7] = 0;
+
+	tableros_resueltos[3][4][0] = 0;
+	tableros_resueltos[3][4][1] = 0;
+	tableros_resueltos[3][4][2] = 1;
+	tableros_resueltos[3][4][3] = 1;
+	tableros_resueltos[3][4][4] = 1;
+	tableros_resueltos[3][4][5] = 0;
+	tableros_resueltos[3][4][6] = 0;
+	tableros_resueltos[3][4][7] = 0;
+
+	tableros_resueltos[3][5][0] = 0;
+	tableros_resueltos[3][5][1] = 0;
+	tableros_resueltos[3][5][2] = 0;
+	tableros_resueltos[3][5][3] = 0;
+	tableros_resueltos[3][5][4] = 0;
+	tableros_resueltos[3][5][5] = 0;
+	tableros_resueltos[3][5][6] = 0;
+	tableros_resueltos[3][5][7] = 0;
+
+	tableros_resueltos[3][6][0] = 0;
+	tableros_resueltos[3][6][1] = 0;
+	tableros_resueltos[3][6][2] = 0;
+	tableros_resueltos[3][6][3] = 0;
+	tableros_resueltos[3][6][4] = 0;
+	tableros_resueltos[3][6][5] = 0;
+	tableros_resueltos[3][6][6] = 0;
+	tableros_resueltos[3][6][7] = 0;
+
+	tableros_resueltos[3][7][0] = 0;
+	tableros_resueltos[3][7][1] = 0;
+	tableros_resueltos[3][7][2] = 0;
+	tableros_resueltos[3][7][3] = 0;
+	tableros_resueltos[3][7][4] = 0;
+	tableros_resueltos[3][7][5] = 0;
+	tableros_resueltos[3][7][6] = 0;
+	tableros_resueltos[3][7][7] = 0;
+}

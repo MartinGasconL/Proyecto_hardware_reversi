@@ -1,0 +1,74 @@
+/*********************************************************************************************
+* Fichero:	main.c
+* Autor:
+* Descrip:	punto de entrada de C
+* Version:  <P4-ARM.timer-leds>
+*********************************************************************************************/
+
+/*--- ficheros de cabecera ---*/
+
+#include "timer.h"
+#include "timer1.h"
+#include "timer2.h"
+#include "44blib.h"
+#include "44b.h"
+#include "stdint.h"
+#include "boton_antirebotes.h"
+#include "pantalla_reversi.h"
+#include "reversi8_2019.h"
+#include "control_modo_procesador.h"
+/*--- variables globales ---*/
+
+
+/*--- codigo de funciones ---*/
+void Main(void)
+{
+	/* Inicializa controladores */
+	sys_init();         
+
+	int b = obtener_modo_procesador();
+
+	cambiar_modo_usuario();
+	/*	TIMERS	*/
+	b = obtener_modo_procesador();
+	timer2_inicializar();		//		|
+	timer2_empezar();			//		| iniciamos el reloj para la pila de depuración.
+	//test_timer2();
+
+	/*TEST FIQ*/
+	//rINTMOD = 0x0;	// cambiamos el modo de interrupcion del timer dos a IRQ, no debería funcionar
+
+	/*	EXCEPCIONES	*/
+	init_excepciones();
+	//test_excepciones();
+
+	/*	JUEGO*/
+
+	int a = obtener_modo_procesador();	//Guardamos en variable para depuracion
+
+	screen_init();
+	timer_init();
+	boton_antirebotes_inicializar();
+	reversi_main();
+
+	while(1);
+}
+
+void test_timer2(){
+	timer2_inicializar();
+	timer2_empezar();
+	Delay(10);	// * 100 us
+	unsigned int primera_lectura = timer2_parar();
+	timer2_empezar();
+	Delay(100);	// * 100 us
+	unsigned int segunda_lectura = timer2_parar();
+	timer2_empezar();
+	Delay(10000);	// * 100 us
+	unsigned int tercera_lectura = timer2_parar();
+	timer2_empezar();
+	Delay(100000);	// * 100 us
+	unsigned int cuarta_lectura = timer2_leer();
+	timer2_parar();
+	int a = 0;
+}
+

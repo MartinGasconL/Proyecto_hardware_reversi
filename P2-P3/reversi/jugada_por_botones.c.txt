@@ -1,0 +1,68 @@
+/*
+ * jugada_por_botones.c
+ *
+ *  Created on: 05/11/2019
+ *      Author: a764429
+ */
+#include "jugada_por_botones.h"
+#include "debug_stack.h"
+#include "8led.h"
+#include "reversi8_2019.h"
+
+int contador = 1;
+
+//Automata que controla el flujo
+void evento_botones_producido(int evento){
+	//Esperando a seleccionar fila
+	switch(estado_jugada_botones){
+		case INICIO_FILA:
+			D8Led_symbol(15);
+			if(evento == EVENTO_IZ_BOTON_SOLTADO){
+				estado_jugada_botones = SELECCIONAR_FILA;
+				contador = 1;
+				D8Led_symbol(contador);
+			}
+			break;
+		case SELECCIONAR_FILA:
+			if(evento == EVENTO_IZ_BOTON_SOLTADO){
+				contador ++;
+				if(contador == 9)
+					contador = 1;
+				D8Led_symbol(contador);
+			}else if(evento == EVENTO_DR_BOTON_SOLTADO){
+				fila_botones = contador;
+				contador = 1;
+				estado_jugada_botones = INICIO_COLUMNA;
+				D8Led_symbol(12);
+			}
+			break;
+		//Esperando a seleccionar columna
+		case INICIO_COLUMNA:
+			if(evento == EVENTO_IZ_BOTON_SOLTADO){
+				estado_jugada_botones = SELECCIONAR_COLUMNA;
+				contador = 1;
+				D8Led_symbol(contador);
+			}
+			break;
+		case SELECCIONAR_COLUMNA:
+			if(evento == EVENTO_IZ_BOTON_SOLTADO){
+				contador ++;
+				if(contador == 9)
+					contador = 1;
+				D8Led_symbol(contador);
+			}else if(evento == EVENTO_DR_BOTON_SOLTADO){
+				columna_botones = contador;
+				contador = 1;
+
+				estado_jugada_botones = INICIO_FILA;
+				jugar(fila_botones - 1,columna_botones - 1);
+				D8Led_symbol(15);
+			}
+			break;
+	}
+}
+void obtener_ficha_botones(int *f, int *c){
+	*f = fila_botones;
+	*c = columna_botones;
+}
+

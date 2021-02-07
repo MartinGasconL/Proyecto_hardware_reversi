@@ -1,0 +1,47 @@
+/*********************************************************************************************
+* Fichero:	cola_pantalla.c
+* Autor: Eduardo Ruiz y Martin Gascon
+* Descrip:	Estructura de datos que encola los trabajos de impresion por pantalla.
+* Version:  <P4-ARM.timer-leds>
+*********************************************************************************************/
+#include "cola_pantalla.h"
+
+#define TAMANO_MAX 10
+
+
+int indice_prod;
+int indice_cons;
+int trabajos[TAMANO_MAX];
+
+void encolar_tabajo(int id_trabajo){
+    trabajos[indice_prod] = id_trabajo;
+    indice_prod ++;
+    if(indice_prod == TAMANO_MAX){
+        indice_prod = 0;
+    }
+}
+
+void init_cola(){
+	indice_prod = 0;
+	indice_cons = 0;
+}
+
+int hay_trabajos_encolados(){
+	return indice_prod != indice_cons;
+}
+
+int obtener_trabajo(){
+    if (indice_cons == TAMANO_MAX)
+        indice_cons = 0;
+    int retval = indice_cons;
+    indice_cons++;
+
+    return trabajos[retval];
+}
+
+void mostrar_cola(){
+    int aux = indice_cons;
+    while(aux < indice_prod){
+        aux++;
+    }
+}

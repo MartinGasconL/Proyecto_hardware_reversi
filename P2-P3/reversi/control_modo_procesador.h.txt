@@ -1,0 +1,13 @@
+
+enum {
+	USER = 16,
+	FIQ = 17,
+	IRQ = 18,
+	SVC = 19,
+	ABORT = 23,
+	UNDEF = 27,
+	SYSTEM =31
+};
+
+int obtener_modo_procesador();
+void cambiar_modo_usuario();
